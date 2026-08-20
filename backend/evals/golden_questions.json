@@ -1,0 +1,57 @@
+[
+  {
+    "id": "position-complete",
+    "question": "Quels indicateurs publics décrivent la position du Groupe en 2025 ?",
+    "mode": "deep",
+    "document_ids": ["foyer_financial_information_2025"],
+    "expected_profile": "public_position",
+    "expected_status": "COMPLETE",
+    "expected_fields": ["group_equity", "non_life_market_share", "business_areas"]
+  },
+  {
+    "id": "customers-complete",
+    "question": "Quels indicateurs clients et opérationnels sont publiés pour 2025 ?",
+    "mode": "deep",
+    "document_ids": ["foyer_annual_report_2025"],
+    "expected_profile": "customer_operations",
+    "expected_status": "COMPLETE",
+    "expected_fields": ["insured_households", "myfoyer_satisfaction", "claims_satisfaction"]
+  },
+  {
+    "id": "health-complete",
+    "question": "Quels chiffres clés sont publiés pour Global Health ?",
+    "mode": "deep",
+    "document_ids": ["foyer_annual_report_2025"],
+    "expected_profile": "international_health",
+    "expected_status": "COMPLETE",
+    "expected_fields": ["active_countries", "earned_premiums", "employee_count"]
+  },
+  {
+    "id": "wrong-scope-not-found",
+    "question": "Quels indicateurs clients et opérationnels sont publiés ?",
+    "mode": "deep",
+    "document_ids": ["foyer_financial_information_2025"],
+    "expected_profile": "customer_operations",
+    "expected_status": "NOT_FOUND",
+    "expected_fields": []
+  },
+  {
+    "id": "turnover-unanswerable",
+    "question": "Quel est le taux de rotation du personnel en 2025 ?",
+    "mode": "deep",
+    "document_ids": ["foyer_annual_report_2025"],
+    "expected_profile": "open_question",
+    "expected_status": "NOT_FOUND",
+    "expected_fields": []
+  },
+  {
+    "id": "claim-count-unanswerable",
+    "question": "Combien de sinistres ont été déclarés en 2025 ?",
+    "mode": "deep",
+    "document_ids": ["foyer_annual_report_2025"],
+    "expected_profile": "open_question",
+    "expected_status": "NOT_FOUND",
+    "expected_fields": []
+  }
+]
+
