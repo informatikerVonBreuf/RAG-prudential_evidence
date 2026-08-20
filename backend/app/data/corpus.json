@@ -1,0 +1,290 @@
+{
+  "corpus_version": "foyer-public-demo-2026-08-20.1",
+  "notice": "Corpus de démonstration dérivé de pages publiques Foyer. Vérifier les documents officiels avant toute décision.",
+  "documents": [
+    {
+      "id": "foyer_financial_information_2025",
+      "folder": "Foyer / Informations financières",
+      "title": "Informations financières — Groupe Foyer",
+      "entity": "Groupe Foyer",
+      "year": 2025,
+      "document_type": "Page institutionnelle",
+      "version": "consultée-2026-08-20",
+      "source_url": "https://groupe.foyer.lu/fr/foyer/informations-financieres",
+      "status": "reviewed",
+      "pages": 1,
+      "description": "Chiffres clés, périmètre d'activité et accès aux publications réglementaires."
+    },
+    {
+      "id": "foyer_annual_report_2025",
+      "folder": "Foyer / Rapport annuel",
+      "title": "Rapport annuel 2025 — présentation web",
+      "entity": "Groupe Foyer",
+      "year": 2025,
+      "document_type": "Rapport annuel — page web",
+      "version": "consultée-2026-08-20",
+      "source_url": "https://groupe.foyer.lu/fr/rapport-annuel",
+      "status": "reviewed",
+      "pages": 1,
+      "description": "Indicateurs publics par activité et éléments de présentation du Groupe."
+    },
+    {
+      "id": "table_extraction_demo",
+      "folder": "Démonstration / Contrôle de tableaux",
+      "title": "Annexe synthétique — contrôle de cellules",
+      "entity": "Entité de démonstration",
+      "year": 2025,
+      "document_type": "Tableau synthétique",
+      "version": "1.0",
+      "source_url": "https://groupe.foyer.lu/fr/documents",
+      "status": "synthetic",
+      "pages": 1,
+      "description": "Jeu synthétique isolé pour démontrer ligne, colonne et bounding box."
+    }
+  ],
+  "chunks": [
+    {
+      "id": "fin-2025-equity",
+      "document_id": "foyer_financial_information_2025",
+      "text": "Au 31 décembre 2025, les capitaux propres, part du Groupe, sont présentés à 1 544,0 millions d'euros.",
+      "locator": {
+        "document_id": "foyer_financial_information_2025",
+        "document_title": "Informations financières — Groupe Foyer",
+        "version": "consultée-2026-08-20",
+        "source_url": "https://groupe.foyer.lu/fr/foyer/informations-financieres",
+        "page": 1,
+        "section_path": ["Le Groupe Foyer", "Chiffres clés"]
+      },
+      "facts": [
+        {
+          "field_id": "group_equity",
+          "label": "Capitaux propres part du Groupe",
+          "value": 1544.0,
+          "formatted_value": "1 544,0 M€",
+          "value_type": "currency",
+          "unit": "millions EUR",
+          "period": "2025-12-31",
+          "entity": "Groupe Foyer"
+        }
+      ]
+    },
+    {
+      "id": "fin-2025-market",
+      "document_id": "foyer_financial_information_2025",
+      "text": "Le Groupe indique 40 % de parts de marché des assurances non-vie au Luxembourg, avec l'ACA comme référence affichée.",
+      "locator": {
+        "document_id": "foyer_financial_information_2025",
+        "document_title": "Informations financières — Groupe Foyer",
+        "version": "consultée-2026-08-20",
+        "source_url": "https://groupe.foyer.lu/fr/foyer/informations-financieres",
+        "page": 1,
+        "section_path": ["Le Groupe Foyer", "Position de marché"]
+      },
+      "facts": [
+        {
+          "field_id": "non_life_market_share",
+          "label": "Part de marché non-vie au Luxembourg",
+          "value": 40,
+          "formatted_value": "40 %",
+          "value_type": "percentage",
+          "unit": "%",
+          "period": "2025",
+          "entity": "Groupe Foyer"
+        }
+      ]
+    },
+    {
+      "id": "fin-2025-activities",
+      "document_id": "foyer_financial_information_2025",
+      "text": "Trois domaines d'activité sont listés : assurance non-vie, assurance vie et gestion patrimoniale, avec des implantations européennes distinctes.",
+      "locator": {
+        "document_id": "foyer_financial_information_2025",
+        "document_title": "Informations financières — Groupe Foyer",
+        "version": "consultée-2026-08-20",
+        "source_url": "https://groupe.foyer.lu/fr/foyer/informations-financieres",
+        "page": 1,
+        "section_path": ["Le Groupe Foyer", "Domaines d'activité"]
+      },
+      "facts": [
+        {
+          "field_id": "business_areas",
+          "label": "Domaines d'activité",
+          "value": "Assurance non-vie ; assurance vie ; gestion patrimoniale",
+          "formatted_value": "3 domaines : non-vie, vie et gestion patrimoniale",
+          "value_type": "text",
+          "unit": null,
+          "period": "2025",
+          "entity": "Groupe Foyer"
+        }
+      ]
+    },
+    {
+      "id": "annual-2025-households",
+      "document_id": "foyer_annual_report_2025",
+      "text": "La présentation du rapport annuel indique plus de 166 000 ménages assurés au Luxembourg.",
+      "locator": {
+        "document_id": "foyer_annual_report_2025",
+        "document_title": "Rapport annuel 2025 — présentation web",
+        "version": "consultée-2026-08-20",
+        "source_url": "https://groupe.foyer.lu/fr/rapport-annuel",
+        "page": 1,
+        "section_path": ["Assurance au Luxembourg", "Chiffres clés"]
+      },
+      "facts": [
+        {
+          "field_id": "insured_households",
+          "label": "Ménages assurés au Luxembourg",
+          "value": 166000,
+          "formatted_value": "> 166 000",
+          "value_type": "integer",
+          "unit": "ménages",
+          "period": "2025",
+          "entity": "Foyer au Luxembourg"
+        }
+      ]
+    },
+    {
+      "id": "annual-2025-myfoyer",
+      "document_id": "foyer_annual_report_2025",
+      "text": "Le rapport annuel présente 93,5 % d'utilisateurs satisfaits de l'application MyFoyer.",
+      "locator": {
+        "document_id": "foyer_annual_report_2025",
+        "document_title": "Rapport annuel 2025 — présentation web",
+        "version": "consultée-2026-08-20",
+        "source_url": "https://groupe.foyer.lu/fr/rapport-annuel",
+        "page": 1,
+        "section_path": ["Assurance au Luxembourg", "Expérience digitale"]
+      },
+      "facts": [
+        {
+          "field_id": "myfoyer_satisfaction",
+          "label": "Satisfaction des utilisateurs MyFoyer",
+          "value": 93.5,
+          "formatted_value": "93,5 %",
+          "value_type": "percentage",
+          "unit": "%",
+          "period": "2025",
+          "entity": "Foyer au Luxembourg"
+        }
+      ]
+    },
+    {
+      "id": "annual-2025-claims",
+      "document_id": "foyer_annual_report_2025",
+      "text": "Le rapport annuel indique que 93 % des clients sont satisfaits de la gestion de leur sinistre.",
+      "locator": {
+        "document_id": "foyer_annual_report_2025",
+        "document_title": "Rapport annuel 2025 — présentation web",
+        "version": "consultée-2026-08-20",
+        "source_url": "https://groupe.foyer.lu/fr/rapport-annuel",
+        "page": 1,
+        "section_path": ["Assurance au Luxembourg", "Gestion des sinistres"]
+      },
+      "facts": [
+        {
+          "field_id": "claims_satisfaction",
+          "label": "Satisfaction liée à la gestion des sinistres",
+          "value": 93,
+          "formatted_value": "93 %",
+          "value_type": "percentage",
+          "unit": "%",
+          "period": "2025",
+          "entity": "Foyer au Luxembourg"
+        }
+      ]
+    },
+    {
+      "id": "annual-2025-global-countries",
+      "document_id": "foyer_annual_report_2025",
+      "text": "Global Health est présenté comme actif dans plus de 100 pays sur le segment international de l'assurance santé.",
+      "locator": {
+        "document_id": "foyer_annual_report_2025",
+        "document_title": "Rapport annuel 2025 — présentation web",
+        "version": "consultée-2026-08-20",
+        "source_url": "https://groupe.foyer.lu/fr/rapport-annuel",
+        "page": 1,
+        "section_path": ["Global Health", "Présence internationale"]
+      },
+      "facts": [
+        {
+          "field_id": "active_countries",
+          "label": "Pays couverts",
+          "value": 100,
+          "formatted_value": "> 100 pays",
+          "value_type": "integer",
+          "unit": "pays",
+          "period": "2025",
+          "entity": "Global Health"
+        }
+      ]
+    },
+    {
+      "id": "annual-2025-global-premiums",
+      "document_id": "foyer_annual_report_2025",
+      "text": "La présentation attribue à Global Health 129 millions d'euros de primes acquises.",
+      "locator": {
+        "document_id": "foyer_annual_report_2025",
+        "document_title": "Rapport annuel 2025 — présentation web",
+        "version": "consultée-2026-08-20",
+        "source_url": "https://groupe.foyer.lu/fr/rapport-annuel",
+        "page": 1,
+        "section_path": ["Global Health", "Indicateurs"]
+      },
+      "facts": [
+        {
+          "field_id": "earned_premiums",
+          "label": "Primes acquises",
+          "value": 129,
+          "formatted_value": "129 M€",
+          "value_type": "currency",
+          "unit": "millions EUR",
+          "period": "2025",
+          "entity": "Global Health"
+        }
+      ]
+    },
+    {
+      "id": "annual-2025-global-employees",
+      "document_id": "foyer_annual_report_2025",
+      "text": "L'effectif publié pour Global Health dans la présentation du rapport annuel est de 111 employés.",
+      "locator": {
+        "document_id": "foyer_annual_report_2025",
+        "document_title": "Rapport annuel 2025 — présentation web",
+        "version": "consultée-2026-08-20",
+        "source_url": "https://groupe.foyer.lu/fr/rapport-annuel",
+        "page": 1,
+        "section_path": ["Global Health", "Indicateurs"]
+      },
+      "facts": [
+        {
+          "field_id": "employee_count",
+          "label": "Effectif publié",
+          "value": 111,
+          "formatted_value": "111 employés",
+          "value_type": "integer",
+          "unit": "employés",
+          "period": "2025",
+          "entity": "Global Health"
+        }
+      ]
+    },
+    {
+      "id": "synthetic-table-control",
+      "document_id": "table_extraction_demo",
+      "text": "Cellule synthétique de contrôle : le montant démonstratif est 100 unités pour la période 2025. Cette valeur ne décrit pas Foyer.",
+      "locator": {
+        "document_id": "table_extraction_demo",
+        "document_title": "Annexe synthétique — contrôle de cellules",
+        "version": "1.0",
+        "source_url": "https://groupe.foyer.lu/fr/documents",
+        "page": 1,
+        "section_path": ["Tableau de validation"],
+        "table_id": "demo-table-1",
+        "row": 2,
+        "column": 3,
+        "bbox": [120.0, 240.0, 260.0, 278.0]
+      },
+      "facts": []
+    }
+  ]
+}

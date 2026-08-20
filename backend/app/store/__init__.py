@@ -1,0 +1,2 @@
+"""Read-only artifact store."""
+

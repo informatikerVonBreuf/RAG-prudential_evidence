@@ -1,0 +1,2 @@
+"""Deterministic evidence validation."""
+
