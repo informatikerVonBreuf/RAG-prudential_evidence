@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: prudential-evidence-lab
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
