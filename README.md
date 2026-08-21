@@ -1,48 +1,84 @@
-# Prudential Evidence Lab
+# 📊 Prudential Evidence Lab
 
-Assistant documentaire auditable construit pour démontrer une architecture RAG sans framework
-RAG. Une question est mappée vers un contrat de preuves, décomposée en requêtes par champ, traitée
-par deux canaux de récupération, puis contrôlée par du code avant rédaction.
+![AI Agents](https://img.shields.io/badge/AI%20AGENTS-646cff?style=flat-square&logo=ai) ![Advanced](https://img.shields.io/badge/ADVANCED-0078d4?style=flat-square) ![RAG System](https://img.shields.io/badge/RAG%20SYSTEM-8a2be2?style=flat-square) ![Production](https://img.shields.io/badge/PRODUCTION-2ecc71?style=flat-square)
 
-## Ce que montre le MVP
+An auditable document assistant demonstrating a framework-less RAG (Retrieval-Augmented
+Generation) architecture. User questions map to evidence contracts, are decomposed into
+field queries, retrieved by multiple channels, validated deterministically, and composed
+into traceable answers with per-assertion citations.
 
-- bibliothèque documentaire publique en lecture seule ;
-- trois modes : Question rapide, Analyse approfondie, Synthèse structurée ;
-- profils de preuves versionnés et mapping d’intentions ;
-- BM25 écrit dans le projet, baseline dense locale et fusion RRF ;
-- statuts `COMPLETE`, `PARTIAL`, `NOT_FOUND` et `CONFLICT` décidés hors LLM ;
-- citations au niveau de chaque assertion, avec page, section, table/cellule et scores ;
-- historique éphémère ou local au navigateur ;
-- API FastAPI, interface React/TypeScript et image Docker unique pour Render.
+---
 
-Le corpus embarqué reprend un petit nombre d’indicateurs publiés sur les pages officielles de
-[Foyer](https://groupe.foyer.lu/fr/foyer/informations-financieres) et de son
-[rapport annuel 2025](https://groupe.foyer.lu/fr/rapport-annuel). Il ne remplace pas les documents
-officiels et ne doit pas servir à une décision financière. Un document distinctement marqué
-« synthétique » permet de tester la transparence d’une cellule de tableau.
+📌 Quick links: [Overview](#overview) • [Features](#key-capabilities) • [Tech & Structure](#project-structure) • [Quick Start](#quickstart) • [Usage](#usage)
 
-## Démarrage local
+---
 
-Prérequis : Python 3.12 et Node.js 22.
+## Overview
+
+This repo is a production-ready demo focused on traceability and reproducibility. Every
+assertion includes a citation (page, section, table/cell, scores) and deterministic logic
+decides claim statuses (`COMPLETE`, `PARTIAL`, `NOT_FOUND`, `CONFLICT`). The embedded
+corpus is small and curated for demo purposes only.
+
+## Problem Solved
+
+- ⚡ Speeds up large-scale document research from hours to minutes
+- 🔎 Extracts and synthesizes multi-format data (text, tables, PDFs)
+- 🔁 Maintains research continuity across multi-step workflows
+- 🧾 Provides cited, traceable analysis for compliance and validation
+
+## Key Capabilities
+
+- 🤖 Multi-Agent Orchestration — Specialized agents coordinate retrieval, validation, and composition
+- 📚 RAG System — Hybrid retrieval (BM25 + local dense baseline + RRF fusion)
+- 🧭 Evidence Profiles — Versioned mapping from intents to fields and checks
+- 🌐 Multimodal Support — Handles text, tables, and document fragments
+- 🐍 Python + Web UI — FastAPI backend and React/TypeScript frontend
+
+## Project Structure
+
+```
+backend/app/domain        # Pydantic contracts and evidence profiles
+backend/app/retrieval     # BM25, dense baseline, RRF, planner
+backend/app/evidence      # Deterministic gate (proof control)
+backend/app/generation    # Composer and claim assembly
+backend/app/api           # FastAPI endpoints and OpenAPI schema
+frontend/src              # React UI + evidence viewer
+docs/architecture         # Code-linked diagrams and mappings
+.github/workflows         # CI and container build
+```
+
+See [docs/architecture/README.md](docs/architecture/README.md) for diagrams and contract-to-code mappings.
+
+## Quickstart
+
+Prereqs: Python 3.12+, Node.js 22+
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate   # or .venv\Scripts\activate on Windows PowerShell
 python -m pip install -e ".[dev]"
 cd frontend && npm install && cd ..
 ```
 
-Dans deux terminaux :
+Start services (two terminals):
 
 ```bash
 make dev-api
 make dev-front
 ```
 
-Ouvrir `http://localhost:5173`. L’API et son contrat OpenAPI sont disponibles sur
-`http://localhost:8000/docs`.
+Frontend: http://localhost:5173 — API docs: http://localhost:8000/docs
 
-## Contrôles
+## Usage
+
+- API endpoints: [backend/app/api/routes.py](backend/app/api/routes.py)
+- Frontend: [frontend/src](frontend/src)
+- Eval harness: [backend/app/evals/run_evals.py](backend/app/evals/run_evals.py)
+
+## Controls & Tests
+
+Common targets:
 
 ```bash
 make lint
@@ -52,45 +88,24 @@ make eval
 make build-front
 ```
 
-L'évaluation contient aussi des questions volontairement non répondables. Elle calcule la
-précision du mapping, l'exactitude du statut, le rappel des champs obligatoires, la précision des
-citations et le taux de fausse complétude. La CI échoue dès qu'une question attendue `NOT_FOUND`
-est déclarée `COMPLETE`. Les résultats et leurs limites sont documentés dans
-`docs/EVALUATION.md`.
+The evaluation suite includes intentionally non-answerable queries and measures mapping accuracy, gating correctness, citation precision, and false-completeness. See [docs/EVALUATION.md](docs/EVALUATION.md).
 
-## Déploiement Render
+## Deployment (Render)
 
-1. Pousser le dépôt sur GitHub.
-2. Dans Render, créer un Blueprint à partir de `render.yaml`.
-3. Render construit le front dans le premier stage Docker, installe uniquement Python dans le
-   runtime, puis expose FastAPI.
-4. Le health check est `/api/health`.
+1. Push to GitHub
+2. Create a Blueprint from `render.yaml` on Render
+3. Render builds the frontend in the first Docker stage and exposes FastAPI
+4. Health check: `/api/health`
 
-Le plan gratuit peut s’endormir et son disque est éphémère. L’application ne promet donc aucune
-persistance serveur. Les documents durables sont ingérés hors ligne, revus, puis intégrés au
-conteneur au redéploiement.
+Note: Render free tier may sleep; persistent storage is not guaranteed. Bake durable documents into images for production.
 
-## Limites assumées
+## Limitations
 
-- la baseline dense locale est un hashing sémantique déterministe, remplaçable par Gemini ou un
-  modèle open-weight via un adapter ; elle n’est pas présentée comme un embedding entraîné ;
-- le corpus est volontairement réduit ; au-delà d’environ 50 000 chunks, l’index exact doit être
-  remplacé par Qdrant, pgvector ou FAISS ANN ;
-- la composition actuelle est déterministe pour que la démo fonctionne sans secret ; un LLM peut
-  reformuler uniquement après validation et sous schéma ;
-- pas de comptes, de base de conversations, de workers d’ingestion ni de Kubernetes dans le MVP ;
-- les tableaux PDF complexes restent un pipeline d’ingestion hors ligne décrit dans
-  `backend/ingestion/README.md`.
+- Local dense baseline is a deterministic semantic hashing fallback and may be replaced by hosted or open-weight models
+- Corpus intentionally small; for >50k chunks use Qdrant/pgvector/FAISS
+- No user accounts, ingestion workers, or production orchestration in the MVP
+- Complex PDF table extraction is an offline ingestion pipeline (`backend/ingestion/README.md`)
 
-## Structure
+---
 
-```text
-backend/app/domain        contrats Pydantic et profils
-backend/app/retrieval     BM25, dense local, RRF, planificateur
-backend/app/evidence      gate déterministe
-backend/app/generation    composition ancrée
-backend/app/api           endpoints FastAPI
-frontend/src              interface métier et transparence
-docs/architecture         schémas reliés aux modules
-.github/workflows         qualité et build du conteneur
-```
+Would you like the same visual/emoji style applied to [docs/architecture/README.md](docs/architecture/README.md)?

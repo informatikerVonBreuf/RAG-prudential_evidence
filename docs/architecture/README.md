@@ -1,21 +1,38 @@
-# Architecture reliée au code
+# **Architecture (Code-Linked)**
 
-Les schémas de ce dossier sont des vues du code, pas des pipelines indépendants.
+![Architecture](https://img.shields.io/badge/ARCHITECTURE-diagrams-blue?style=flat-square)
 
-| Bloc du schéma | Implémentation | Contrat |
+The diagrams in this folder are views of the code (not separate pipeline diagrams).
+Each diagram maps a logical block to its implementation file and runtime contract.
+
+---
+
+## Mapping: Block → Implementation → Contract
+
+| Block | Implementation | Contract |
 | --- | --- | --- |
-| Interface métier | `frontend/src/App.tsx` | `QuestionRequest`, `AnswerPayload` |
-| API | `backend/app/api/routes.py` | OpenAPI / Pydantic |
-| Mapping | `backend/app/domain/profiles.py` | `EvidenceProfile` |
-| Planification batch | `backend/app/retrieval/planner.py` | `SearchQuery[]` |
-| Recherche hybride | `backend/app/retrieval/hybrid.py` | `Candidate[]`, `ScoreTrace` |
-| Contrôle de preuves | `backend/app/evidence/gate.py` | `GateResult` |
-| Composition | `backend/app/generation/composer.py` | `Claim[]` |
-| Transparence | `frontend/src/App.tsx` | `EvidenceView`, `SourceLocator` |
+| Business UI | `frontend/src/App.tsx` | `QuestionRequest`, `AnswerPayload` |
+| API | `backend/app/api/routes.py` | OpenAPI / Pydantic schemas |
+| Intent Mapping | `backend/app/domain/profiles.py` | `EvidenceProfile` |
+| Batch Planner | `backend/app/retrieval/planner.py` | `SearchQuery[]` |
+| Hybrid Retrieval | `backend/app/retrieval/hybrid.py` | `Candidate[]`, `ScoreTrace` |
+| Evidence Gate | `backend/app/evidence/gate.py` | `GateResult` |
+| Composition / Composer | `backend/app/generation/composer.py` | `Claim[]` |
+| Transparency / Viewer | `frontend/src/App.tsx` | `EvidenceView`, `SourceLocator` |
 
-`flux_technique.png` décrit le chemin d’exécution. `interface_cible.png` décrit ce que voit
-l’utilisateur. `architecture_cible.png` présente la séparation ingestion/exécution et
-`decision_modeles.png` garde la décision online/local explicite.
+## Diagrams
 
-Toute évolution d’un bloc doit modifier son contrat, ses tests et le schéma associé.
+- `flux_technique.png` — execution flow and component interactions
+- `interface_cible.png` — target user interface and evidence presentation
+- `architecture_cible.png` — ingestion vs execution separation
+- `decision_modeles.png` — model decision boundaries (online vs local)
+
+## Guidelines
+
+- Any change to a block MUST update its contract, tests, and associated diagram.
+- Keep diagrams in sync with code; prefer code-linked diagrams over speculative designs.
+
+---
+
+Would you like me to embed the images directly or add small preview thumbnails? If yes, I can add inline previews for each PNG.
 
