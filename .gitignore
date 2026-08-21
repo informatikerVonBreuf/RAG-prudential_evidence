@@ -6,5 +6,10 @@ __pycache__/
 frontend/node_modules/
 frontend/dist/
 .env
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+models/*
+!models/.gitkeep
 .DS_Store
-

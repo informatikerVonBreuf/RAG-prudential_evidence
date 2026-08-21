@@ -9,8 +9,8 @@ def test_health_describes_loaded_corpus() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "ok"
-    assert payload["documents"] == 3
-    assert payload["chunks"] >= 9
+    assert payload["documents"] == 4
+    assert payload["chunks"] >= 13
 
 
 def test_documents_are_publicly_described() -> None:
@@ -19,4 +19,3 @@ def test_documents_are_publicly_described() -> None:
     documents = response.json()
     assert any(document["status"] == "reviewed" for document in documents)
     assert all(document["source_url"].startswith("https://") for document in documents)
-

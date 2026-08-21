@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.domain.models import AnswerPayload, DocumentView, HealthPayload, QuestionRequest
 from app.domain.profiles import list_profiles
@@ -45,6 +45,13 @@ def profiles() -> list[dict[str, object]]:
 def suggested_questions() -> list[dict[str, str]]:
     return [
         {
+            "label": "Couverture prudentielle 2025",
+            "question": (
+                "Quels éléments publics caractérisent la couverture prudentielle "
+                "du Groupe Foyer en 2025 ?"
+            ),
+        },
+        {
             "label": "Position du Groupe",
             "question": "Quels indicateurs publics décrivent la position du Groupe en 2025 ?",
         },
@@ -64,4 +71,7 @@ def suggested_questions() -> list[dict[str, str]]:
 
 @router.post("/query", response_model=AnswerPayload)
 async def query(request: QuestionRequest) -> AnswerPayload:
-    return await engine.answer(request)
+    try:
+        return await engine.answer(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc

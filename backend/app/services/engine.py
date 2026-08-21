@@ -8,6 +8,7 @@ from app.domain.models import AnswerPayload, QueryTrace, QuestionRequest
 from app.domain.profiles import map_question
 from app.evidence.gate import DeterministicEvidenceGate
 from app.generation.composer import GroundedComposer
+from app.generation.providers import OptionalGeminiComposer
 from app.retrieval.hybrid import HybridRetriever
 from app.retrieval.planner import plan_queries
 from app.store.artifacts import ArtifactStore, store
@@ -18,20 +19,26 @@ class EvidenceEngine:
         self.store = artifact_store
         self.gate = DeterministicEvidenceGate()
         self.composer = GroundedComposer()
+        self.online_composer = OptionalGeminiComposer()
+        self._retrievers: dict[tuple[str, ...], HybridRetriever] = {}
 
     async def answer(self, request: QuestionRequest) -> AnswerPayload:
         started = time.perf_counter()
         profile = map_question(request.question, request.profile_id)
-        requested_scope = self.store.valid_document_ids(request.scope.document_ids)
+        requested_scope = self.store.validate_document_ids(request.scope.document_ids)
         selected_chunks = self.store.selected_chunks(requested_scope)
         selected_document_ids = sorted({chunk.document_id for chunk in selected_chunks})
         queries = plan_queries(request.question, profile, selected_document_ids)
-        retriever = HybridRetriever(selected_chunks)
+        scope_key = tuple(selected_document_ids)
+        retriever = self._retrievers.get(scope_key)
+        if retriever is None:
+            retriever = HybridRetriever(selected_chunks)
+            self._retrievers[scope_key] = retriever
 
         tasks = [asyncio.to_thread(retriever.search, query, 5) for query in queries]
         candidate_batches = await asyncio.gather(*tasks)
         candidates = [candidate for batch in candidate_batches for candidate in batch]
-        gate_result = self.gate.evaluate(profile, candidates)
+        gate_result = self.gate.evaluate(profile, candidates, request.constraints)
         summary, claims = self.composer.compose(
             question=request.question,
             mode=request.mode,
@@ -39,6 +46,13 @@ class EvidenceEngine:
             evidence=gate_result.evidence,
             missing_fields=gate_result.missing_fields,
         )
+        generation_provider = "deterministic"
+        online_result = await asyncio.to_thread(
+            self.online_composer.compose, request.question, gate_result.evidence
+        )
+        if online_result.text:
+            summary = online_result.text
+            generation_provider = online_result.provider
 
         traces = [
             QueryTrace(
@@ -64,8 +78,9 @@ class EvidenceEngine:
             corpus_version=self.store.corpus_version,
             query_trace=traces,
             latency_ms=latency_ms,
+            generation_provider=generation_provider,
+            model_calls=[online_result.trace],
         )
 
 
 engine = EvidenceEngine()
-

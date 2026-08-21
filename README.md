@@ -15,7 +15,7 @@ into traceable answers with per-assertion citations.
 
 ## Overview
 
-This repo is a production-ready demo focused on traceability and reproducibility. Every
+This repo is a deployment-ready prototype focused on traceability and reproducibility. Every
 assertion includes a citation (page, section, table/cell, scores) and deterministic logic
 decides claim statuses (`COMPLETE`, `PARTIAL`, `NOT_FOUND`, `CONFLICT`). The embedded
 corpus is small and curated for demo purposes only.
@@ -29,7 +29,6 @@ corpus is small and curated for demo purposes only.
 
 ## Key Capabilities
 
-- 🤖 Multi-Agent Orchestration — Specialized agents coordinate retrieval, validation, and composition
 - 📚 RAG System — Hybrid retrieval (BM25 + local dense baseline + RRF fusion)
 - 🧭 Evidence Profiles — Versioned mapping from intents to fields and checks
 - 🌐 Multimodal Support — Handles text, tables, and document fragments
@@ -49,6 +48,8 @@ docs/architecture         # Code-linked diagrams and mappings
 ```
 
 See [docs/architecture/README.md](docs/architecture/README.md) for diagrams and contract-to-code mappings.
+See [docs/OPERATIONS.md](docs/OPERATIONS.md) for the complete offline-ingestion, Gemini,
+Docker and deployment runbook.
 
 ## Quickstart
 
@@ -76,6 +77,19 @@ Frontend: http://localhost:5173 — API docs: http://localhost:8000/docs
 - Frontend: [frontend/src](frontend/src)
 - Eval harness: [backend/app/evals/run_evals.py](backend/app/evals/run_evals.py)
 
+## Demonstrated case: public QRT 2025
+
+The primary demonstration uses Groupe Foyer's official 2025 public QRT. Three reviewed
+cells from table `S.23.01.22` form the evidence contract:
+
+- `R0660/C0010`: eligible own funds covering the total group SCR;
+- `R0680/C0010`: total group SCR;
+- `R0690/C0010`: coverage ratio.
+
+The PDF was inspected with PyMuPDF and pdfplumber offline. The deployed corpus contains
+only the reviewed facts, page/table/cell locators, source URL and document fingerprint;
+this is a targeted extraction path, not a claim of generic automated PDF ingestion.
+
 ## Controls & Tests
 
 Common targets:
@@ -102,6 +116,8 @@ Note: Render free tier may sleep; persistent storage is not guaranteed. Bake dur
 ## Limitations
 
 - Local dense baseline is a deterministic semantic hashing fallback and may be replaced by hosted or open-weight models
+- Entity and period are enforced when supplied as structured query constraints; the UI sends
+  them only for a single-document scope, where they are unambiguous
 - Corpus intentionally small; for >50k chunks use Qdrant/pgvector/FAISS
 - No user accounts, ingestion workers, or production orchestration in the MVP
 - Complex PDF table extraction is an offline ingestion pipeline (`backend/ingestion/README.md`)

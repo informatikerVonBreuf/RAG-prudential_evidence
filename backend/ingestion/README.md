@@ -1,20 +1,54 @@
-# Chemin d’ingestion hors ligne
+# Pipeline d’ingestion hors ligne
 
-L’ingestion n’est volontairement pas exécutée dans le service Render. Elle doit produire des
-artefacts revus et immuables avant déploiement.
+L’application déployée ne parse aucun PDF. L’ingestion est exécutée sur le poste de
+développement et produit des artefacts revus, versionnés puis compilés dans le corpus
+léger du runtime.
 
-1. Télécharger les documents publics et enregistrer URL, date, version et empreinte SHA-256.
-2. Utiliser PyMuPDF pour le texte et les coordonnées de base.
-3. Router les tableaux vers Camelot (`lattice`, puis `stream`) ou Docling/TableFormer selon leur
-   structure. Les scans passent d’abord par OCR.
-4. Normaliser chaque cellule dans un `TableFact` typé : métrique, valeur, unité, période, entité,
-   page, ligne, colonne et `bbox`.
-5. Produire `documents.json`, `chunks.jsonl`, `tables.jsonl`, `facts.json`, l’index lexical et les
-   embeddings.
-6. Exécuter une revue ciblée des tableaux critiques puis `python backend/tools/validate_corpus.py`.
-7. Versionner le manifeste et redéployer.
+```text
+source publique → profil documentaire → extraction structurée
+→ pages, tableaux, figures et provenance → chunks contextualisés
+→ index pré-calculés → revue → compilation du corpus runtime
+```
 
-Le fichier `backend/app/data/corpus.json` fusionne ces artefacts dans un format compact pour le
-premier démonstrateur. L’annexe synthétique qu’il contient sert uniquement à tester les
-localisateurs de cellules et ne décrit pas Foyer.
+## Extracteurs
 
+- Docling est le moteur principal prévu pour la hiérarchie, les tableaux, les figures et
+  les pages. `docling_converter.py` configure des pipelines distincts selon le profil.
+- PyMuPDF fournit la baseline réellement exécutée sur le QRT et le fallback ciblé. Son
+  usage est enregistré dans le manifeste ; il vérifie aussi les coordonnées des cellules.
+- Gemini est optionnel pour les descriptions visuelles et les embeddings. Aucun appel
+  n’est effectué sans clé et modèle configurés.
+
+Le pipeline QRT validé extrait `R0660`, `R0680` et `R0690` dans
+`S.23.01.22/C0010`. Ce chemin ciblé n’est pas une ingestion universelle de PDF.
+
+## Artefacts
+
+Chaque document obtient un dossier dans `data/processed/<document_id>/` :
+
+```text
+manifest.json         pages.jsonl          sections.json
+tables.jsonl          facts.jsonl          figures.jsonl
+chunks.jsonl          references.json      page_images/
+indexes/embedding_manifest.json            indexes/embeddings.json
+```
+
+`data/raw` et `data/processed` restent ignorés par Git, sauf leurs `.gitkeep`. Seuls les
+artefacts revus nécessaires au runtime sont promus dans `backend/app/data`.
+
+## Commandes
+
+```powershell
+python -m pip install -e ".[dev,notebooks,ingestion,online-models]"
+pel-ingest data/raw/foyer-groupe-qrt-public-2025.pdf `
+  --document-id foyer_group_qrt_2025 `
+  --title "QRT public 2025 - Groupe Foyer" `
+  --entity "Groupe Foyer" --period 2025 `
+  --source-url "https://www.foyer.lu/fr/mydoc/WebSites-Documentsgroupe-376"
+pel-build-corpus `
+  --processed data/processed/foyer_group_qrt_2025 `
+  --output backend/app/data/corpus.generated.json
+```
+
+Comparer le corpus généré au corpus actif avant promotion. Ne jamais remplacer
+automatiquement un artefact revu.

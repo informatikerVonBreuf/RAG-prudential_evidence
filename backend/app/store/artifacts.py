@@ -26,10 +26,12 @@ class ArtifactStore:
             selected = {doc.id for doc in self.documents if doc.status != "synthetic"}
         return [chunk for chunk in self.chunks if chunk.document_id in selected]
 
-    def valid_document_ids(self, document_ids: list[str]) -> list[str]:
+    def validate_document_ids(self, document_ids: list[str]) -> list[str]:
         valid = set(self._documents_by_id)
-        return [document_id for document_id in document_ids if document_id in valid]
+        unknown = sorted(set(document_ids) - valid)
+        if unknown:
+            raise ValueError(f"Documents inconnus dans le périmètre : {', '.join(unknown)}")
+        return list(dict.fromkeys(document_ids))
 
 
 store = ArtifactStore()
-

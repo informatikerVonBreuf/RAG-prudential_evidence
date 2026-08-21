@@ -28,8 +28,8 @@ export interface SourceLocator {
   page: number;
   section_path: string[];
   table_id?: string | null;
-  row?: number | null;
-  column?: number | null;
+  row?: number | string | null;
+  column?: number | string | null;
   bbox?: number[] | null;
 }
 
@@ -84,6 +84,16 @@ export interface QueryTrace {
   consulted_document_ids: string[];
 }
 
+export interface ModelCallTrace {
+  provider: string;
+  model?: string | null;
+  purpose: string;
+  status: "DISABLED" | "SUCCESS" | "FALLBACK" | "ERROR";
+  attempts: number;
+  latency_ms: number;
+  detail: string;
+}
+
 export interface AnswerPayload {
   request_id: string;
   mode: Mode;
@@ -98,6 +108,8 @@ export interface AnswerPayload {
   corpus_version: string;
   query_trace: QueryTrace[];
   latency_ms: number;
+  generation_provider: string;
+  model_calls: ModelCallTrace[];
 }
 
 export interface SessionEntry {
@@ -106,4 +118,3 @@ export interface SessionEntry {
   question: string;
   answer: AnswerPayload;
 }
-

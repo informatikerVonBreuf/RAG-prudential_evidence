@@ -37,10 +37,16 @@ class ScopeSelection(BaseModel):
     document_ids: list[str] = Field(default_factory=list)
 
 
+class EvidenceConstraints(BaseModel):
+    entity: str | None = None
+    period: str | None = None
+
+
 class QuestionRequest(BaseModel):
     question: str = Field(min_length=3, max_length=1200)
     mode: Mode = Mode.DEEP
     scope: ScopeSelection = Field(default_factory=ScopeSelection)
+    constraints: EvidenceConstraints = Field(default_factory=EvidenceConstraints)
     profile_id: str | None = None
 
 
@@ -76,8 +82,8 @@ class SourceLocator(BaseModel):
     page: int
     section_path: list[str]
     table_id: str | None = None
-    row: int | None = None
-    column: int | None = None
+    row: int | str | None = None
+    column: int | str | None = None
     bbox: list[float] | None = None
 
 
@@ -146,6 +152,16 @@ class QueryTrace(BaseModel):
     consulted_document_ids: list[str]
 
 
+class ModelCallTrace(BaseModel):
+    provider: str
+    model: str | None = None
+    purpose: str
+    status: Literal["DISABLED", "SUCCESS", "FALLBACK", "ERROR"]
+    attempts: int = 0
+    latency_ms: int = 0
+    detail: str
+
+
 class AnswerPayload(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
@@ -162,6 +178,8 @@ class AnswerPayload(BaseModel):
     corpus_version: str
     query_trace: list[QueryTrace]
     latency_ms: int
+    generation_provider: str = "deterministic"
+    model_calls: list[ModelCallTrace] = Field(default_factory=list)
 
 
 class HealthPayload(BaseModel):
@@ -169,4 +187,3 @@ class HealthPayload(BaseModel):
     corpus_version: str
     documents: int
     chunks: int
-

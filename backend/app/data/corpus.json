@@ -1,6 +1,6 @@
 {
-  "corpus_version": "foyer-public-demo-2026-08-20.1",
-  "notice": "Corpus de démonstration dérivé de pages publiques Foyer. Vérifier les documents officiels avant toute décision.",
+  "corpus_version": "foyer-public-demo-2026-08-21.1",
+  "notice": "Corpus de démonstration dérivé de sources publiques Foyer, dont un QRT PDF officiel extrait puis revu sur trois cellules critiques.",
   "documents": [
     {
       "id": "foyer_financial_information_2025",
@@ -29,6 +29,19 @@
       "description": "Indicateurs publics par activité et éléments de présentation du Groupe."
     },
     {
+      "id": "foyer_group_qrt_2025",
+      "folder": "Foyer / Annexes SFCR",
+      "title": "QRT public 2025 — Groupe Foyer",
+      "entity": "Groupe Foyer",
+      "year": 2025,
+      "document_type": "QRT public — PDF officiel",
+      "version": "2025-12-31 / acquis-2026-08-21 / sha256-4ac00a5aec153c64",
+      "source_url": "https://www.foyer.lu/fr/mydoc/WebSites-Documentsgroupe-376",
+      "status": "reviewed",
+      "pages": 10,
+      "description": "Annexe réglementaire publique. Trois cellules S.23.01.22 ont été extraites et revues avec leur code de ligne, colonne et coordonnées PDF."
+    },
+    {
       "id": "table_extraction_demo",
       "folder": "Démonstration / Contrôle de tableaux",
       "title": "Annexe synthétique — contrôle de cellules",
@@ -43,6 +56,62 @@
     }
   ],
   "chunks": [
+    {
+      "id": "qrt-2025-s2301-r0660-c0010",
+      "document_id": "foyer_group_qrt_2025",
+      "text": "S.23.01.22 — R0660/C0010 : total des fonds propres éligibles pour couvrir le SCR total du groupe : 2.407.647 milliers d'euros.",
+      "locator": {
+        "document_id": "foyer_group_qrt_2025",
+        "document_title": "QRT public 2025 — Groupe Foyer",
+        "version": "2025-12-31 / sha256-4ac00a5aec153c64",
+        "source_url": "https://www.foyer.lu/fr/mydoc/WebSites-Documentsgroupe-376",
+        "page": 7,
+        "section_path": ["S.23.01.22", "Fonds propres"],
+        "table_id": "S.23.01.22",
+        "row": "R0660",
+        "column": "C0010",
+        "bbox": [495.6, 270.13, 564.4, 276.85]
+      },
+      "facts": [{
+        "field_id": "eligible_own_funds_scr", "label": "Fonds propres éligibles couvrant le SCR total",
+        "value": 2407647, "formatted_value": "2 407 647 k€", "value_type": "currency",
+        "unit": "milliers EUR", "period": "2025-12-31", "entity": "Groupe Foyer"
+      }]
+    },
+    {
+      "id": "qrt-2025-s2301-r0680-c0010",
+      "document_id": "foyer_group_qrt_2025",
+      "text": "S.23.01.22 — R0680/C0010 : capital de solvabilité requis total du groupe : 840.040 milliers d'euros.",
+      "locator": {
+        "document_id": "foyer_group_qrt_2025", "document_title": "QRT public 2025 — Groupe Foyer",
+        "version": "2025-12-31 / sha256-4ac00a5aec153c64",
+        "source_url": "https://www.foyer.lu/fr/mydoc/WebSites-Documentsgroupe-376", "page": 7,
+        "section_path": ["S.23.01.22", "Fonds propres"], "table_id": "S.23.01.22",
+        "row": "R0680", "column": "C0010", "bbox": [495.6, 278.41, 564.37, 285.13]
+      },
+      "facts": [{
+        "field_id": "group_scr", "label": "Capital de solvabilité requis total du Groupe",
+        "value": 840040, "formatted_value": "840 040 k€", "value_type": "currency",
+        "unit": "milliers EUR", "period": "2025-12-31", "entity": "Groupe Foyer"
+      }]
+    },
+    {
+      "id": "qrt-2025-s2301-r0690-c0010",
+      "document_id": "foyer_group_qrt_2025",
+      "text": "S.23.01.22 — R0690/C0010 : ratio total des fonds propres éligibles sur le SCR total du groupe : 2,87, soit 287 %.",
+      "locator": {
+        "document_id": "foyer_group_qrt_2025", "document_title": "QRT public 2025 — Groupe Foyer",
+        "version": "2025-12-31 / sha256-4ac00a5aec153c64",
+        "source_url": "https://www.foyer.lu/fr/mydoc/WebSites-Documentsgroupe-376", "page": 7,
+        "section_path": ["S.23.01.22", "Fonds propres"], "table_id": "S.23.01.22",
+        "row": "R0690", "column": "C0010", "bbox": [495.6, 286.93, 564.33, 293.65]
+      },
+      "facts": [{
+        "field_id": "scr_coverage_ratio", "label": "Ratio de couverture du SCR total",
+        "value": 287, "formatted_value": "287 %", "value_type": "percentage",
+        "unit": "%", "period": "2025-12-31", "entity": "Groupe Foyer"
+      }]
+    },
     {
       "id": "fin-2025-equity",
       "document_id": "foyer_financial_information_2025",

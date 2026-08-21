@@ -20,6 +20,27 @@ dev = [
   "pytest-cov>=6.2,<7",
   "ruff>=0.12,<1",
 ]
+notebooks = [
+  "ipykernel>=6.29,<7",
+  "nbformat>=5.10,<6",
+  "nbclient>=0.10,<1",
+  "pandas>=2.2,<3",
+]
+ingestion = [
+  "docling>=2.60,<3",
+  "pymupdf>=1.26,<2",
+]
+online-models = [
+  "google-genai>=1.30,<2",
+]
+local-models = [
+  "sentence-transformers>=5,<6",
+  "numpy>=2,<3",
+]
+
+[project.scripts]
+pel-ingest = "ingestion.cli:main"
+pel-build-corpus = "ingestion.promote:main"
 
 [tool.setuptools.packages.find]
 where = ["backend"]
@@ -35,4 +56,3 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
-

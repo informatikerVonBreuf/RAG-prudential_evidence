@@ -7,6 +7,7 @@ from app.domain.models import (
     AnswerStatus,
     Candidate,
     CoverageItem,
+    EvidenceConstraints,
     EvidenceProfile,
     EvidenceView,
 )
@@ -25,7 +26,9 @@ class DeterministicEvidenceGate:
         self,
         profile: EvidenceProfile,
         candidates: list[Candidate],
+        constraints: EvidenceConstraints | None = None,
     ) -> GateResult:
+        constraints = constraints or EvidenceConstraints()
         candidates_by_field: dict[str, list[Candidate]] = defaultdict(list)
         for candidate in candidates:
             candidates_by_field[candidate.field_id].append(candidate)
@@ -37,15 +40,45 @@ class DeterministicEvidenceGate:
 
         for field in profile.fields:
             accepted: list[tuple[Candidate, object]] = []
+            rejected: list[tuple[Candidate, object, str]] = []
             for candidate in candidates_by_field[field.id]:
                 matching_facts = [
                     fact for fact in candidate.chunk.facts if fact.field_id == field.id
                 ]
                 for fact in matching_facts:
-                    if fact.value_type == field.value_type:
+                    reasons: list[str] = []
+                    if fact.value_type != field.value_type:
+                        reasons.append(f"type {fact.value_type!r} au lieu de {field.value_type!r}")
+                    if constraints.entity and _normalize_context(fact.entity) != _normalize_context(
+                        constraints.entity
+                    ):
+                        reasons.append(
+                            f"entité {fact.entity!r} au lieu de {constraints.entity!r}"
+                        )
+                    if constraints.period and not _period_matches(fact.period, constraints.period):
+                        reasons.append(
+                            f"période {fact.period!r} au lieu de {constraints.period!r}"
+                        )
+                    if reasons:
+                        rejected.append((candidate, fact, "; ".join(reasons)))
+                    else:
                         accepted.append((candidate, fact))
 
             if not accepted:
+                for index, (candidate, fact, reason) in enumerate(rejected[:2], 1):
+                    evidence.append(
+                        EvidenceView(
+                            id=f"evidence-{field.id}-rejected-{index}",
+                            field_id=field.id,
+                            field_label=field.label,
+                            state="REJECTED",
+                            excerpt=candidate.chunk.text,
+                            fact=fact,
+                            source=candidate.chunk.locator,
+                            score=candidate.score,
+                            reason=f"Preuve incompatible avec le contrat : {reason}.",
+                        )
+                    )
                 evidence_id = f"evidence-{field.id}-missing"
                 evidence.append(
                     EvidenceView(
@@ -53,7 +86,11 @@ class DeterministicEvidenceGate:
                         field_id=field.id,
                         field_label=field.label,
                         state="MISSING",
-                        reason="Aucune preuve typée et citée n'a été trouvée dans le périmètre.",
+                        reason=(
+                            "Les preuves trouvées sont incompatibles avec le contrat."
+                            if rejected
+                            else "Aucune preuve typée et citée n'a été trouvée dans le périmètre."
+                        ),
                     )
                 )
                 coverage.append(
@@ -89,7 +126,10 @@ class DeterministicEvidenceGate:
                             "Plusieurs valeurs incompatibles existent pour la même "
                             "entité et période."
                             if is_conflict
-                            else "Type, entité, période et provenance contrôlés par le gate."
+                            else (
+                                "Type, entité, période demandée et provenance "
+                                "contrôlés par le gate."
+                            )
                         ),
                     )
                 )
@@ -111,3 +151,15 @@ class DeterministicEvidenceGate:
         else:
             status = AnswerStatus.COMPLETE
         return GateResult(status, evidence, coverage, missing_fields)
+
+
+def _normalize_context(value: str) -> str:
+    return " ".join(value.casefold().split())
+
+
+def _period_matches(actual: str | None, expected: str) -> bool:
+    if actual is None:
+        return False
+    return actual == expected or actual.startswith(f"{expected}-") or expected.startswith(
+        f"{actual}-"
+    )

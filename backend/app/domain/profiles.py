@@ -7,6 +7,33 @@ from app.domain.models import EvidenceField, EvidenceProfile
 
 PROFILES: tuple[EvidenceProfile, ...] = (
     EvidenceProfile(
+        id="prudential_coverage",
+        version="1.0.0",
+        label="Couverture prudentielle du Groupe",
+        description="Fonds propres éligibles, SCR total et ratio de couverture publiés.",
+        triggers=["prudentielle", "solvabilite", "scr", "couverture", "fonds propres eligibles"],
+        fields=[
+            EvidenceField(
+                id="eligible_own_funds_scr",
+                label="Fonds propres éligibles couvrant le SCR total",
+                value_type="currency",
+                query_templates=["S.23.01 R0660 fonds propres éligibles SCR total groupe"],
+            ),
+            EvidenceField(
+                id="group_scr",
+                label="Capital de solvabilité requis total du Groupe",
+                value_type="currency",
+                query_templates=["S.23.01 R0680 capital solvabilité requis total groupe SCR"],
+            ),
+            EvidenceField(
+                id="scr_coverage_ratio",
+                label="Ratio de couverture du SCR total",
+                value_type="percentage",
+                query_templates=["S.23.01 R0690 ratio fonds propres éligibles SCR total groupe"],
+            ),
+        ],
+    ),
+    EvidenceProfile(
         id="public_position",
         version="1.0.0",
         label="Position publique du Groupe",

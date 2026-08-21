@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
 
-from app.domain.models import QuestionRequest, ScopeSelection  # noqa: E402
+from app.domain.models import EvidenceConstraints, QuestionRequest, ScopeSelection  # noqa: E402
 from app.services.engine import engine  # noqa: E402
 
 
@@ -28,6 +28,8 @@ async def evaluate() -> dict[str, object]:
                 question=golden["question"],
                 mode=golden["mode"],
                 scope=ScopeSelection(document_ids=golden["document_ids"]),
+                constraints=EvidenceConstraints.model_validate(golden.get("constraints", {})),
+                profile_id=golden.get("profile_id"),
             )
         )
         covered = {item.field_id for item in answer.coverage if item.state == "COVERED"}

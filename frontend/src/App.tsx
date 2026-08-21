@@ -75,7 +75,13 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const payload = await askQuestion(trimmed, mode, selectedDocuments);
+      const selectedMetadata = documents.filter((doc) => selectedDocuments.includes(doc.id));
+      const entities = [...new Set(selectedMetadata.map((doc) => doc.entity))];
+      const years = [...new Set(selectedMetadata.map((doc) => doc.year))];
+      const payload = await askQuestion(trimmed, mode, selectedDocuments, {
+        entity: selectedMetadata.length === 1 && entities.length === 1 ? entities[0] : undefined,
+        period: selectedMetadata.length === 1 && years.length === 1 ? String(years[0]) : undefined,
+      });
       setAnswer(payload);
       const firstAccepted = payload.evidence.find((item) => item.state === "ACCEPTED" || item.state === "CONFLICT");
       setActiveEvidenceId(firstAccepted?.id ?? null);
@@ -241,7 +247,11 @@ function AnswerView({ answer, onEvidence }: { answer: AnswerPayload; onEvidence:
         <summary>Piste d'audit de la récupération</summary>
         {answer.query_trace.map((trace) => <div key={trace.field_id}><strong>{trace.field_id}</strong><span>{trace.query}</span><small>{trace.candidate_count} candidats · {trace.consulted_document_ids.length} documents</small></div>)}
       </details>
-      <footer className="answer-footer"><span>{answer.latency_ms} ms</span><span>Corpus {answer.corpus_version}</span><span>ID {answer.request_id.slice(0, 8)}</span></footer>
+      <details className="trace-details">
+        <summary>Appels modèles</summary>
+        {answer.model_calls.map((call, index) => <div key={`${call.purpose}-${index}`}><strong>{call.provider} · {call.status}</strong><span>{call.model ?? "non configuré"}</span><small>{call.purpose} · {call.attempts} tentative(s) · {call.latency_ms} ms — {call.detail}</small></div>)}
+      </details>
+      <footer className="answer-footer"><span>{answer.latency_ms} ms</span><span>Synthèse {answer.generation_provider}</span><span>Corpus {answer.corpus_version}</span><span>ID {answer.request_id.slice(0, 8)}</span></footer>
     </article>
   );
 }
@@ -260,7 +270,7 @@ function EvidenceInspector({ answer, evidence }: { answer: AnswerPayload; eviden
           <div><dt>Version</dt><dd>{evidence.source.version}</dd></div>
           <div><dt>Page</dt><dd>{evidence.source.page}</dd></div>
           <div><dt>Section</dt><dd>{evidence.source.section_path.join(" › ")}</dd></div>
-          {evidence.source.table_id && <><div><dt>Table</dt><dd>{evidence.source.table_id}</dd></div><div><dt>Cellule</dt><dd>L{evidence.source.row} · C{evidence.source.column}</dd></div></>}
+          {evidence.source.table_id && <><div><dt>Table</dt><dd>{evidence.source.table_id}</dd></div><div><dt>Cellule</dt><dd>{evidence.source.row} · {evidence.source.column}</dd></div></>}
         </dl>
         <a href={evidence.source.source_url} target="_blank" rel="noreferrer">Ouvrir la source officielle <Icon name="external" /></a>
       </div>}
@@ -271,4 +281,3 @@ function EvidenceInspector({ answer, evidence }: { answer: AnswerPayload; eviden
     </div>
   );
 }
-
