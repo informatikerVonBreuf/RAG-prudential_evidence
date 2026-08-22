@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from backend.tools.validate_notebooks import validate_syntax
+from tools.validate_notebooks import validate_syntax
 
 
 def test_notebook_sources_are_syntactically_valid() -> None:
