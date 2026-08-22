@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 import os
+from contextlib import suppress
 from pathlib import Path
 
 from app.domain.models import Chunk
@@ -99,11 +100,32 @@ class GeminiDenseIndex:
             )
             query_vector = response.embeddings[0].values
             self.query_cache[cache_key] = query_vector
-            self.query_cache_path.write_text(
-                json.dumps(self.query_cache, ensure_ascii=False), encoding="utf-8"
-            )
+            with suppress(OSError):
+                self.query_cache_path.write_text(
+                    json.dumps(self.query_cache, ensure_ascii=False), encoding="utf-8"
+                )
         results = [
             (chunk, sum(left * right for left, right in zip(query_vector, vector, strict=True)))
             for chunk, vector in zip(self.chunks, self.vectors, strict=True)
         ]
         return sorted(results, key=lambda item: (-item[1], item[0].id))
+
+
+class FallbackDenseIndex:
+    """Use a trained index when available and survive provider/cache misses honestly."""
+
+    def __init__(self, primary: GeminiDenseIndex, fallback: LocalDenseIndex) -> None:
+        self.primary = primary
+        self.fallback = fallback
+        self.fallback_used = False
+
+    @property
+    def provider(self) -> str:
+        return "gemini+hashing-fallback" if self.fallback_used else self.primary.provider
+
+    def search(self, query: str) -> list[tuple[Chunk, float]]:
+        try:
+            return self.primary.search(query)
+        except Exception:  # provider/cache failures must preserve deterministic retrieval
+            self.fallback_used = True
+            return self.fallback.search(query)

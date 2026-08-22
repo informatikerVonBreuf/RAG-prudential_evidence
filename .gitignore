@@ -2,10 +2,15 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.coverage
 .mypy_cache/
 frontend/node_modules/
 frontend/dist/
 .npm-cache/
+build/
+dist/
+tmp/
+backend/*.egg-info/
 .env
 data/raw/*
 !data/raw/.gitkeep

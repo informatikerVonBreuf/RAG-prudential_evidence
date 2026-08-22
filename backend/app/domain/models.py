@@ -153,6 +153,16 @@ class QueryTrace(BaseModel):
     consulted_document_ids: list[str]
 
 
+class RetrievalRunTrace(BaseModel):
+    strategy: Literal["sequential_top1", "batch_multi_field"]
+    dense_provider: str
+    rounds: int
+    k_history: list[int]
+    stop_reason: Literal["contract_complete", "conflict", "budget_exhausted"]
+    resolved_references: list[str] = Field(default_factory=list)
+    unresolved_references: list[str] = Field(default_factory=list)
+
+
 class ModelCallTrace(BaseModel):
     provider: str
     model: str | None = None
@@ -182,6 +192,7 @@ class AnswerPayload(BaseModel):
     generation_provider: str = "deterministic"
     model_calls: list[ModelCallTrace] = Field(default_factory=list)
     mapping_trace: dict[str, object] = Field(default_factory=dict)
+    retrieval_run: RetrievalRunTrace
 
 
 class HealthPayload(BaseModel):

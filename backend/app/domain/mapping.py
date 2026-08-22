@@ -150,6 +150,22 @@ class HybridQuestionMapper:
             profile = self._profile(explicit_profile_id)
             return self._result(profile, constraints, 1.0, "explicit", {}, {}, ambiguities, [])
 
+        unresolved_context = bool(
+            (entity_ambiguities and not explicit_constraints.entity)
+            or (period_ambiguities and not explicit_constraints.period)
+        )
+        if unresolved_context:
+            return self._result(
+                OPEN_QUESTION_PROFILE,
+                constraints,
+                0.0,
+                "abstention",
+                {},
+                {},
+                ambiguities,
+                [],
+            )
+
         lexical_scores = self._lexical_scores(question)
         ordered = sorted(lexical_scores.items(), key=lambda item: (-item[1], item[0]))
         best_id, best = ordered[0]

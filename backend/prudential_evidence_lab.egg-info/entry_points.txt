@@ -1,3 +1,0 @@
-[console_scripts]
-pel-build-corpus = ingestion.promote:main
-pel-ingest = ingestion.cli:main

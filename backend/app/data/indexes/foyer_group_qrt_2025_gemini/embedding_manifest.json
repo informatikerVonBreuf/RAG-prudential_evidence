@@ -1,0 +1,9 @@
+{
+  "provider": "gemini",
+  "model": "gemini-embedding-001",
+  "is_trained_embedding_model": true,
+  "task_type": "RETRIEVAL_DOCUMENT",
+  "dimensions": 3072,
+  "chunks": 87,
+  "content_sha256": "0771b8fc911eee565b3e704035ce22f5726f9b0d220bdead47b8eccc9915085d"
+}

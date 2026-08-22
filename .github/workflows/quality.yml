@@ -23,6 +23,8 @@ jobs:
       - run: python backend/tools/validate_notebooks.py
       - run: pytest --cov=app --cov-report=term-missing
       - run: python backend/evals/run_evals.py
+      - run: python -m build --wheel
+      - run: python backend/tools/validate_wheel.py
 
   frontend:
     runs-on: ubuntu-latest

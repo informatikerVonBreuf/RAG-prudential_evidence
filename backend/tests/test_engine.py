@@ -1,8 +1,19 @@
+from app.domain.models import AnswerStatus
 from app.domain.profiles import explain_question_mapping, map_question
 from app.main import app
+from app.services.engine import choose_retrieval_strategy, stop_reason_for_status
 from fastapi.testclient import TestClient
 
 client = TestClient(app)
+
+
+def test_all_orchestration_routes_and_stop_reasons_are_explicit() -> None:
+    assert choose_retrieval_strategy(1) == "sequential_top1"
+    assert choose_retrieval_strategy(3) == "batch_multi_field"
+    assert stop_reason_for_status(AnswerStatus.COMPLETE) == "contract_complete"
+    assert stop_reason_for_status(AnswerStatus.CONFLICT) == "conflict"
+    assert stop_reason_for_status(AnswerStatus.PARTIAL) == "budget_exhausted"
+    assert stop_reason_for_status(AnswerStatus.NOT_FOUND) == "budget_exhausted"
 
 
 def test_mapping_explanation_exposes_selected_profile_and_trigger_score() -> None:
@@ -207,6 +218,9 @@ def test_real_qrt_coverage_contract_is_complete_and_cell_cited() -> None:
     payload = response.json()
     assert payload["status"] == "COMPLETE"
     assert payload["profile_id"] == "prudential_coverage"
+    assert payload["retrieval_run"]["dense_provider"] == "gemini"
+    assert payload["retrieval_run"]["strategy"] == "batch_multi_field"
+    assert payload["retrieval_run"]["stop_reason"] == "contract_complete"
     accepted = [item for item in payload["evidence"] if item["state"] == "ACCEPTED"]
     assert {item["source"]["row"] for item in accepted} == {"R0660", "R0680", "R0690"}
     assert all(item["source"]["column"] == "C0010" for item in accepted)

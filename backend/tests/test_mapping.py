@@ -62,3 +62,20 @@ def test_identical_mapping_is_returned_from_in_memory_cache() -> None:
     second = mapper.map("What is FGH SCR coverage in 2025?")
 
     assert first is second
+
+
+def test_multi_entity_question_abstains_without_explicit_constraint() -> None:
+    mapped = HybridQuestionMapper().map(
+        "Compare Foyer Assurances SCR with Global Health SCR in 2025"
+    )
+
+    assert mapped.profile.id == "open_question"
+    assert mapped.decision.decision_source == "abstention"
+    assert mapped.decision.ambiguities
+
+
+def test_multi_period_question_abstains_without_explicit_constraint() -> None:
+    mapped = HybridQuestionMapper().map("Compare Groupe Foyer coverage in 2024 and 2025")
+
+    assert mapped.profile.id == "open_question"
+    assert mapped.decision.decision_source == "abstention"

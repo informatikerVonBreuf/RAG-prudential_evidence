@@ -1,25 +1,27 @@
-# Évaluation du chemin de preuve
+# Evidence-path evaluation
 
-Le jeu d’or initial contient six questions stratifiées : trois répondables, une dont le périmètre
-est volontairement incorrect et deux non répondables. Il vérifie autant l’abstention que la
-capacité à retrouver un fait.
+The golden set contains thirteen stratified questions. It covers complete answers,
+unanswerable questions, a wrong document scope, a wrong entity, a wrong period, and
+deliberately ambiguous multi-entity or multi-period requests. It tests abstention as
+well as the retrieval of several compatible evidence fields.
 
-| Mesure | Résultat actuel | Lecture |
+| Metric | Current result | Interpretation |
 | --- | ---: | --- |
-| Exactitude du mapping | 1,00 | Profil attendu sélectionné sur 6/6 questions |
-| Exactitude du statut | 1,00 | `COMPLETE` / `NOT_FOUND` correct sur 6/6 |
-| Rappel des champs obligatoires | 1,00 | 9/9 champs attendus couverts |
-| Précision des citations | 1,00 | Chaque assertion cite une preuve acceptée |
-| Taux de fausse complétude | 0,00 | 0/3 questions non complètes déclarées complètes |
+| Mapping accuracy | 1.00 | Expected profile selected for 13/13 questions |
+| Status accuracy | 1.00 | Expected answer status returned for 13/13 questions |
+| Required-field recall | 1.00 | Every required field in the positive cases is covered |
+| Citation precision | 1.00 | Every generated claim cites accepted evidence |
+| False-completeness rate | 0.00 | No non-complete case is reported as `COMPLETE` |
 
-Ces résultats valident le câblage du MVP, pas sa généralisation. Six questions et un corpus réduit
-ne suffisent pas à conclure sur une qualité de production. L’étape suivante consiste à augmenter le
-jeu d’or par type de document, type de tableau, entité, période et difficulté, avec une revue humaine
-indépendante.
+These results validate the MVP wiring, not production generalisation. Thirteen questions
+and a small reviewed corpus are insufficient to claim production quality. Conflict and
+document-reference cases are tested separately with controlled fixtures; they are not
+presented as anomalies observed in Foyer's public sources. Production validation would
+require a larger adversarial golden set reviewed independently across document types,
+table structures, entities, periods and extraction failures.
 
-Le rapport reproductible est obtenu avec :
+Reproduce the report with:
 
 ```bash
 python backend/evals/run_evals.py
 ```
-

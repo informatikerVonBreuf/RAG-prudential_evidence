@@ -3,15 +3,36 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
+from pathlib import Path
 
 from app.domain.mapping import HybridQuestionMapper
-from app.domain.models import AnswerPayload, QueryTrace, QuestionRequest
+from app.domain.models import (
+    AnswerPayload,
+    AnswerStatus,
+    QueryTrace,
+    QuestionRequest,
+    RetrievalRunTrace,
+)
 from app.evidence.gate import DeterministicEvidenceGate
 from app.generation.composer import GroundedComposer
 from app.generation.providers import OptionalGeminiComposer
+from app.retrieval.dense import FallbackDenseIndex, GeminiDenseIndex, LocalDenseIndex
 from app.retrieval.hybrid import HybridRetriever
 from app.retrieval.planner import plan_queries
+from app.retrieval.references import resolve_references
 from app.store.artifacts import ArtifactStore, store
+
+
+def choose_retrieval_strategy(field_count: int) -> str:
+    return "sequential_top1" if field_count == 1 else "batch_multi_field"
+
+
+def stop_reason_for_status(status: AnswerStatus) -> str:
+    if status == AnswerStatus.COMPLETE:
+        return "contract_complete"
+    if status == AnswerStatus.CONFLICT:
+        return "conflict"
+    return "budget_exhausted"
 
 
 class EvidenceEngine:
@@ -38,20 +59,35 @@ class EvidenceEngine:
         scope_key = tuple(selected_document_ids)
         retriever = self._retrievers.get(scope_key)
         if retriever is None:
-            retriever = HybridRetriever(selected_chunks)
+            retriever = self._build_retriever(selected_chunks)
             self._retrievers[scope_key] = retriever
 
-        tasks = [asyncio.to_thread(retriever.search, query, 5) for query in queries]
-        candidate_batches = await asyncio.gather(*tasks)
-        unique_candidates = {}
-        for batch in candidate_batches:
-            for candidate in batch:
-                key = (candidate.field_id, candidate.chunk.id)
-                current = unique_candidates.get(key)
-                if current is None or candidate.score.rrf_score > current.score.rrf_score:
-                    unique_candidates[key] = candidate
-        candidates = list(unique_candidates.values())
-        gate_result = self.gate.evaluate(profile, candidates, mapped.constraints)
+        strategy = choose_retrieval_strategy(len(profile.fields))
+        k_budget = (1, 3, 5)
+        resolved_references: list[str] = []
+        unresolved_references: list[str] = []
+        candidate_batches = []
+        gate_result = None
+        for k in k_budget:
+            tasks = [asyncio.to_thread(retriever.search, query, k) for query in queries]
+            candidate_batches = await asyncio.gather(*tasks)
+            unique_candidates = {}
+            for batch in candidate_batches:
+                resolution = resolve_references(batch, selected_chunks)
+                resolved_references.extend(resolution.resolved)
+                unresolved_references.extend(resolution.unresolved)
+                for candidate in resolution.candidates:
+                    key = (candidate.field_id, candidate.chunk.id)
+                    current = unique_candidates.get(key)
+                    if current is None or candidate.score.rrf_score > current.score.rrf_score:
+                        unique_candidates[key] = candidate
+            gate_result = self.gate.evaluate(
+                profile, list(unique_candidates.values()), mapped.constraints
+            )
+            if gate_result.status in {AnswerStatus.COMPLETE, AnswerStatus.CONFLICT}:
+                break
+        assert gate_result is not None
+        stop_reason = stop_reason_for_status(gate_result.status)
         summary, claims = self.composer.compose(
             question=request.question,
             mode=request.mode,
@@ -94,7 +130,30 @@ class EvidenceEngine:
             generation_provider=generation_provider,
             model_calls=[*mapped.decision.model_calls, online_result.trace],
             mapping_trace=mapped.decision.model_dump(mode="json"),
+            retrieval_run=RetrievalRunTrace(
+                strategy=strategy,
+                dense_provider=retriever.dense.provider,
+                rounds=k_budget.index(k) + 1,
+                k_history=list(k_budget[: k_budget.index(k) + 1]),
+                stop_reason=stop_reason,
+                resolved_references=list(dict.fromkeys(resolved_references)),
+                unresolved_references=list(dict.fromkeys(unresolved_references)),
+            ),
         )
+
+    def _build_retriever(self, selected_chunks):
+        index_directory = (
+            Path(__file__).parents[1]
+            / "data"
+            / "indexes"
+            / "foyer_group_qrt_2025_gemini"
+        )
+        try:
+            primary = GeminiDenseIndex(selected_chunks, index_directory)
+            dense = FallbackDenseIndex(primary, LocalDenseIndex(selected_chunks))
+        except (OSError, ValueError, KeyError):
+            dense = None
+        return HybridRetriever(selected_chunks, dense_index=dense)
 
 
 engine = EvidenceEngine()

@@ -104,5 +104,23 @@
     "expected_profile": "entity_prudential_coverage",
     "expected_status": "NOT_FOUND",
     "expected_fields": []
+  },
+  {
+    "id": "multi-entity-ambiguous-abstention",
+    "question": "Compare Foyer Assurances SCR with Global Health SCR in 2025",
+    "mode": "deep",
+    "document_ids": ["foyer_assurances_qrt_2025", "foyer_global_health_qrt_2025"],
+    "expected_profile": "open_question",
+    "expected_status": "NOT_FOUND",
+    "expected_fields": []
+  },
+  {
+    "id": "multi-period-ambiguous-abstention",
+    "question": "Compare Groupe Foyer coverage in 2024 and 2025",
+    "mode": "deep",
+    "document_ids": ["foyer_group_qrt_2025"],
+    "expected_profile": "open_question",
+    "expected_status": "NOT_FOUND",
+    "expected_fields": []
   }
 ]

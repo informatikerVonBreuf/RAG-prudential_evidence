@@ -61,12 +61,16 @@ GEMINI_EMBEDDING_MODEL=gemini-embedding-001
 RUN_ONLINE_EXPERIMENT=0
 RUN_VISUAL_ENRICHMENT=0
 ENABLE_HYBRID_MAPPING=0
+ENABLE_GEMINI_GENERATION=0
 ```
 
 `ENABLE_HYBRID_MAPPING=1` enables Gemini only for questions whose deterministic
 profile score has no clear winner. Clear rules remain at zero calls; ambiguous questions
 use one embedding call, then at most one structured judge call. Identical decisions are
 cached in memory. Provider failure always falls back to `open_question` rather than guessing.
+
+`ENABLE_GEMINI_GENERATION=1` separately enables grounded answer reformulation. Keeping
+mapping and generation flags separate makes model use and cost explicit.
 
 Sans clé, la composition déterministe et la baseline hashing restent actives. Avec une
 clé, Gemini peut reformuler uniquement les preuves acceptées. Il ne décide jamais du

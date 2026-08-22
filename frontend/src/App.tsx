@@ -250,6 +250,13 @@ function AnswerView({ answer, onEvidence }: { answer: AnswerPayload; onEvidence:
           <span>{answer.mapping_trace.profile_id} · confiance {answer.mapping_trace.confidence.toFixed(2)}</span>
           <small>Entité {answer.mapping_trace.entity ?? "non contrainte"} · période {answer.mapping_trace.period ?? "non contrainte"}</small>
         </div>
+        <div>
+          <strong>Récupération · {answer.retrieval_run.strategy}</strong>
+          <span>{answer.retrieval_run.dense_provider} · k={answer.retrieval_run.k_history.join("→")}</span>
+          <small>{answer.retrieval_run.rounds} tour(s) · arrêt {answer.retrieval_run.stop_reason} · {answer.retrieval_run.resolved_references.length} renvoi(s) résolu(s)</small>
+          {answer.retrieval_run.resolved_references.map((reference) => <small key={reference}>Résolu · {reference}</small>)}
+          {answer.retrieval_run.unresolved_references.map((reference) => <small key={reference}>Non résolu · {reference}</small>)}
+        </div>
         {answer.query_trace.map((trace) => <div key={trace.field_id}><strong>{trace.field_id}</strong><span>{trace.query}</span><small>{trace.candidate_count} candidats · {trace.consulted_document_ids.length} documents</small></div>)}
       </details>
       <details className="trace-details">

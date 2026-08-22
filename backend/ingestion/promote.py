@@ -18,6 +18,14 @@ ROW_FIELDS = {
 }
 
 
+def runtime_section_path(chunk: dict[str, object]) -> list[str]:
+    """Guarantee a reviewable locator even for cover-page or unsectioned visuals."""
+    section_path = chunk.get("section_path")
+    if isinstance(section_path, list) and section_path:
+        return [str(item) for item in section_path]
+    return [f"Page {chunk['page_start']}", "Unsectioned content"]
+
+
 def compile_runtime_corpus(base_path: Path, processed_directory: Path, output_path: Path) -> None:
     corpus = json.loads(base_path.read_text(encoding="utf-8"))
     manifest = json.loads((processed_directory / "manifest.json").read_text(encoding="utf-8"))
@@ -69,7 +77,7 @@ def compile_runtime_corpus(base_path: Path, processed_directory: Path, output_pa
                     "version": version,
                     "source_url": manifest["source_url"],
                     "page": chunk["page_start"],
-                    "section_path": chunk.get("section_path", []),
+                    "section_path": runtime_section_path(chunk),
                     "bbox": first_provenance.get("bbox"),
                 },
                 "facts": [],

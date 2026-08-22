@@ -25,6 +25,8 @@ dans le conteneur Render.
 | 06 | `06_end_to_end_evaluation.ipynb` | Le système complet reste-t-il fidèle ? | Zéro fausse complétude sur le jeu initial |
 | 07 | `07_offline_ingestion_pipeline.ipynb` | Les artefacts de déploiement sont-ils reproductibles ? | QRT réel, cache complet et cellules critiques validées |
 | 08 | `08_chunk_size_and_retrieval_limits.ipynb` | How does chunk size affect retrieval? | Full BM25, Gemini cosine and RRF rankings for 900/1800/3000/4800-character variants |
+| 09 | `09_runtime_orchestration_and_reference_loops.ipynb` | Does the runtime use trained vectors, bounded recovery and reference following? | Provider, k-history, stop reason and resolved/unresolved targets visible |
+| 10 | `10_complete_acceptance_matrix.ipynb` | Are all recruiter-facing orchestration promises demonstrably covered? | Eleven end-to-end, integration and controlled branch checks pass with their evidence level displayed |
 
 ## Installation Windows / PowerShell
 
@@ -103,7 +105,7 @@ This executes all cells without saving their outputs. To refresh and persist eve
 python backend/tools/validate_notebooks.py --save-outputs
 ```
 
-## How to interpret the nine notebooks
+## How to interpret the eleven notebooks
 
 | Notebook | Input | Main procedure | Output to inspect | What a pass really means |
 | --- | --- | --- | --- | --- |
@@ -116,5 +118,7 @@ python backend/tools/validate_notebooks.py --save-outputs
 | 06 | Eleven positive and negative golden cases | Full engine, latency loop and FastAPI contract | Per-case statuses, aggregate metrics, p50/p95 and HTTP response | Demo acceptance passes; sample size and in-process latency limit generalization |
 | 07 | Cached extraction artifacts | Offline assembly, visual/table enrichment and promotion checks | Artifact counts and validation failures | Deployment can read reviewed artifacts without parsing PDFs online |
 | 08 | The same PDF chunked at 900/1800/3000/4800 characters | Retrieval comparison across chunk sizes | Full rankings and field recall by size | Chunk size is an empirical trade-off; embedding dimension alone cannot choose it |
+| 09 | Real QRT runtime requests plus controlled reference chunks | Bounded top-k recovery, contract stop and explicit reference following | Strategy, provider, k-history, stop reason and reference traces | Runtime orchestration is observable; reference resolution remains explicit and same-document only |
+| 10 | Real QRT requests plus minimal controlled rare-branch fixtures | Requirement-to-test acceptance matrix | Eleven checks with evidence level, observed value and pass state | The scoped demo promises are executable; controlled fixtures are not claims about public-source events |
 
 The stored reference run currently shows 11/11 expected end-to-end outcomes, citation precision 1.0, required-field recall 1.0 and false-completeness rate 0.0. These results are coherent for the curated demo. The most important limitation is coverage: more documents, paraphrases, OCR failures, conflicting periods and adversarial questions are required before claiming robustness at scale.

@@ -29,7 +29,7 @@ corpus is small and curated for demo purposes only.
 
 ## Key Capabilities
 
-- 📚 RAG System — Hybrid retrieval (BM25 + local dense baseline + RRF fusion)
+- 📚 RAG System — BM25 + targeted Gemini 3072-dimensional cache + explicit hashing fallback + RRF
 - 🧭 Evidence Profiles — Versioned mapping from intents to fields and checks
 - 🌐 Multimodal Support — Handles text, tables, and document fragments
 - 🐍 Python + Web UI — FastAPI backend and React/TypeScript frontend
@@ -86,9 +86,10 @@ cells from table `S.23.01.22` form the evidence contract:
 - `R0680/C0010`: total group SCR;
 - `R0690/C0010`: coverage ratio.
 
-The PDF was inspected with PyMuPDF and pdfplumber offline. The deployed corpus contains
-only the reviewed facts, page/table/cell locators, source URL and document fingerprint;
-this is a targeted extraction path, not a claim of generic automated PDF ingestion.
+The PDFs were processed offline with Docling and a PyMuPDF fallback, then reviewed and
+promoted as Markdown/chunk artifacts. The main Groupe Foyer QRT has a deployed Gemini
+embedding cache for 87 chunks; other scopes visibly use the hashing fallback. This is a
+reviewed offline ingestion path, not a claim of universally reliable PDF automation.
 
 ## Controls & Tests
 
@@ -115,7 +116,9 @@ Note: Render free tier may sleep; persistent storage is not guaranteed. Bake dur
 
 ## Limitations
 
-- Local dense baseline is a deterministic semantic hashing fallback and may be replaced by hosted or open-weight models
+- Gemini dense coverage is limited to the 87-chunk principal QRT; other scopes use a deterministic hashing fallback
+- Retrieval expands through a fixed `k=1 → 3 → 5` budget; it is not a distributed agent orchestration system
+- Cross-reference resolution supports explicit numbered sections only and follows at most three targets per batch
 - Entity and period are enforced when supplied as structured query constraints; the UI sends
   them only for a single-document scope, where they are unambiguous
 - Corpus intentionally small; for >50k chunks use Qdrant/pgvector/FAISS

@@ -25,7 +25,11 @@ class OptionalGeminiComposer:
 
     @property
     def enabled(self) -> bool:
-        return bool(self.api_key and self.model)
+        return bool(
+            os.getenv("ENABLE_GEMINI_GENERATION", "0") == "1"
+            and self.api_key
+            and self.model
+        )
 
     def compose(self, question: str, evidence: list[EvidenceView]) -> GenerationResult:
         started = time.perf_counter()

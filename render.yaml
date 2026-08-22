@@ -9,4 +9,13 @@ services:
     envVars:
       - key: PYTHONUNBUFFERED
         value: "1"
-
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_EMBEDDING_MODEL
+        value: gemini-embedding-001
+      - key: GEMINI_GENERATION_MODEL
+        value: gemini-2.5-flash
+      - key: ENABLE_HYBRID_MAPPING
+        value: "1"
+      - key: ENABLE_GEMINI_GENERATION
+        value: "1"

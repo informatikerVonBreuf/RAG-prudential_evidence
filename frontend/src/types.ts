@@ -106,6 +106,16 @@ export interface MappingTrace {
   model_calls: ModelCallTrace[];
 }
 
+export interface RetrievalRunTrace {
+  strategy: "sequential_top1" | "batch_multi_field";
+  dense_provider: string;
+  rounds: number;
+  k_history: number[];
+  stop_reason: "contract_complete" | "conflict" | "budget_exhausted";
+  resolved_references: string[];
+  unresolved_references: string[];
+}
+
 export interface AnswerPayload {
   request_id: string;
   mode: Mode;
@@ -123,6 +133,7 @@ export interface AnswerPayload {
   generation_provider: string;
   model_calls: ModelCallTrace[];
   mapping_trace: MappingTrace;
+  retrieval_run: RetrievalRunTrace;
 }
 
 export interface SessionEntry {

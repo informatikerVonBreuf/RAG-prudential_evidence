@@ -13424,7 +13424,10 @@
         "version": "2025 / sha256-9cdf74fe9f8d2c09",
         "source_url": "https://www.foyer.lu/fr/mydoc/WebSites-Documentsgroupe-332",
         "page": 1,
-        "section_path": [],
+        "section_path": [
+          "Cover page",
+          "Foyer corporate identity"
+        ],
         "bbox": [
           266.32,
           729.42,
@@ -24761,7 +24764,10 @@
         "version": "2025 / sha256-993b171a5af814b6",
         "source_url": "https://www.foyer.lu/fr/mydoc/12625",
         "page": 1,
-        "section_path": [],
+        "section_path": [
+          "Cover page",
+          "Foyer corporate identity"
+        ],
         "bbox": [
           249.89,
           705.87,

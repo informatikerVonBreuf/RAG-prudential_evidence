@@ -7,7 +7,7 @@ from ingestion.enrich_visuals import enrich_cached_visuals
 from ingestion.indexing import build_embedding_cache
 from ingestion.models import FigureArtifact
 from ingestion.pipeline import ingest_pdf
-from ingestion.promote import ROW_FIELDS
+from ingestion.promote import ROW_FIELDS, runtime_section_path
 from ingestion.pymupdf_fallback import QRT_TEMPLATES
 
 
@@ -97,3 +97,13 @@ def test_group_and_solo_qrt_evidence_contracts_are_distinct() -> None:
     assert set(QRT_TEMPLATES["S.23.01.01"]) == {"R0540", "R0580", "R0620"}
     assert ROW_FIELDS["R0680"][0] == "group_scr"
     assert ROW_FIELDS["R0580"][0] == "entity_scr"
+
+
+def test_runtime_promotion_gives_unsectioned_visuals_a_reviewable_locator() -> None:
+    assert runtime_section_path({"page_start": 1, "section_path": []}) == [
+        "Page 1",
+        "Unsectioned content",
+    ]
+    assert runtime_section_path({"page_start": 7, "section_path": ["S.23.01.22"]}) == [
+        "S.23.01.22"
+    ]
