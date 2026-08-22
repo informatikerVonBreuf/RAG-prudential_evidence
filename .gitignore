@@ -5,6 +5,7 @@ __pycache__/
 .mypy_cache/
 frontend/node_modules/
 frontend/dist/
+.npm-cache/
 .env
 data/raw/*
 !data/raw/.gitkeep
@@ -12,4 +13,5 @@ data/processed/*
 !data/processed/.gitkeep
 models/*
 !models/.gitkeep
+backend/app/data/corpus.generated.json
 .DS_Store

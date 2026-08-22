@@ -1,4 +1,14 @@
-# Parcours expérimental et évaluation progressive
+# Notebook laboratory: architecture, outputs and interpretation
+
+The notebooks form one continuous evidence pipeline. Read them in numerical order: each notebook consumes or validates the artifact produced by the previous layer.
+
+`PDF → extracted markdown/tables/images → chunks → embeddings/indexes → field queries → candidates → evidence contract → cited answer → evaluation`
+
+For every experiment, distinguish three notions:
+
+- **Observed output**: the tables, scores and statuses printed by the executed cell.
+- **Pass criterion**: a precise invariant checked by an assertion.
+- **Scope of the conclusion**: what the experiment does not prove. A perfect score on curated fixtures is not production validation.
 
 Les notebooks forment un laboratoire de recherche reproductible. Ils ne remplacent ni les modules
 applicatifs ni les tests automatisés. Aucun notebook, modèle local ou parseur lourd n'est requis
@@ -14,6 +24,7 @@ dans le conteneur Render.
 | 05 | `05_evidence_gate_and_grounding.ipynb` | Le code détecte-t-il manque et conflit ? | COMPLETE, NOT_FOUND et CONFLICT démontrés |
 | 06 | `06_end_to_end_evaluation.ipynb` | Le système complet reste-t-il fidèle ? | Zéro fausse complétude sur le jeu initial |
 | 07 | `07_offline_ingestion_pipeline.ipynb` | Les artefacts de déploiement sont-ils reproductibles ? | QRT réel, cache complet et cellules critiques validées |
+| 08 | `08_chunk_size_and_retrieval_limits.ipynb` | How does chunk size affect retrieval? | Full BM25, Gemini cosine and RRF rankings for 900/1800/3000/4800-character variants |
 
 ## Installation Windows / PowerShell
 
@@ -21,8 +32,8 @@ dans le conteneur Render.
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install -e ".[dev,notebooks]"
-python -m ipykernel install --user --name prudential-evidence-lab --display-name "Prudential Evidence Lab"
+python -m pip install -e ".[dev,notebooks,ingestion,online-models]"
+python -m ipykernel install --prefix .venv --name prudential-evidence-lab --display-name "Prudential Evidence Lab (.venv)"
 Copy-Item .env.example .env
 jupyter lab
 ```
@@ -38,8 +49,8 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```bash
 python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[dev,notebooks]"
-python -m ipykernel install --user --name prudential-evidence-lab --display-name "Prudential Evidence Lab"
+python -m pip install -e ".[dev,notebooks,ingestion,online-models]"
+python -m ipykernel install --prefix .venv --name prudential-evidence-lab --display-name "Prudential Evidence Lab (.venv)"
 cp .env.example .env
 jupyter lab
 ```
@@ -48,7 +59,6 @@ jupyter lab
 
 ```bash
 python -m pip install -e ".[ingestion]"
-python -m pip install -e ".[tables]"
 python -m pip install -e ".[local-models]"
 python -m pip install -e ".[online-models]"
 ```
@@ -60,8 +70,12 @@ python -m pip install -e ".[online-models]"
 - Pour un vrai modèle local, configurer `LOCAL_EMBEDDING_MODEL_PATH` vers un dossier de poids
   déjà téléchargé. Les notebooks utilisent `local_files_only=True`.
 - Camelot peut demander des dépendances système selon le type de tableau et la plateforme.
-- Docling reste volontairement hors installation par défaut : c'est une étape d'ingestion locale,
-  pas une dépendance runtime du prototype.
+- Docling est installé dans l'environnement de laboratoire local, mais reste absent du runtime
+  Docker : l'application déployée consomme uniquement les artefacts préparés.
+
+Le notebook 07 lit le cache par défaut. Pour relancer volontairement Docling, définir
+`RUN_PDF_INGESTION=1`. Pour déclencher aussi les descriptions Gemini, définir
+`RUN_VISUAL_ENRICHMENT=1` et renseigner la clé dans `.env`.
 
 ## Commit recommandé
 
@@ -80,7 +94,27 @@ La modification du workflow GitHub Actions peut être conservée dans le commit 
 Dans un environnement qui interdit les sockets ou le démarrage d'un kernel :
 
 ```bash
-python backend/tools/validate_notebooks.py --execute --in-process
+python backend/tools/validate_notebooks.py --execute
 ```
 
-Ce mode exécute toutes les cellules dans leur ordre, sans conserver les sorties dans les fichiers.
+This executes all cells without saving their outputs. To refresh and persist every output for reviewer reading:
+
+```bash
+python backend/tools/validate_notebooks.py --save-outputs
+```
+
+## How to interpret the nine notebooks
+
+| Notebook | Input | Main procedure | Output to inspect | What a pass really means |
+| --- | --- | --- | --- | --- |
+| 00 | Python environment and `.env` presence | Version/import/configuration checks | Environment report | The selected kernel can run the laboratory; no model quality is tested |
+| 01 | Runtime corpus and source inventory | Provenance/entity/period/type audit | One row per document and chunk counts | Sources are traceable and synthetic data is labeled |
+| 02 | Cached real PDFs | Docling/PyMuPDF text, table and page inspection | Extracted tables with page/row/column metadata | Target QRT content is reconstructable; it is not a universal PDF benchmark |
+| 03 | Short diagnostic texts and provider configuration | Hashing, optional local model, Ollama connectivity, optional Gemini calls | Dimensions, cosine examples, provider flags | Providers are honestly identified; retrieval quality remains untested |
+| 04 | One business question and the Groupe Foyer QRT | Profile mapping, field reformulation, BM25 + Gemini + RRF | Every query, excerpt, source score/rank, recall@k and full chunk corpus | Required evidence reaches the candidate set; the gate must still validate it |
+| 05 | Complete, missing and conflicting candidate fixtures | Deterministic evidence contract | COMPLETE/PARTIAL/NOT_FOUND/CONFLICT and source checks | False completeness is prevented for tested conditions |
+| 06 | Eleven positive and negative golden cases | Full engine, latency loop and FastAPI contract | Per-case statuses, aggregate metrics, p50/p95 and HTTP response | Demo acceptance passes; sample size and in-process latency limit generalization |
+| 07 | Cached extraction artifacts | Offline assembly, visual/table enrichment and promotion checks | Artifact counts and validation failures | Deployment can read reviewed artifacts without parsing PDFs online |
+| 08 | The same PDF chunked at 900/1800/3000/4800 characters | Retrieval comparison across chunk sizes | Full rankings and field recall by size | Chunk size is an empirical trade-off; embedding dimension alone cannot choose it |
+
+The stored reference run currently shows 11/11 expected end-to-end outcomes, citation precision 1.0, required-field recall 1.0 and false-completeness rate 0.0. These results are coherent for the curated demo. The most important limitation is coverage: more documents, paraphrases, OCR failures, conflicting periods and adversarial questions are required before claiming robustness at scale.

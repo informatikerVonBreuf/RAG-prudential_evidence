@@ -7,11 +7,14 @@ from pathlib import Path
 ROW_FIELDS = {
     "R0660": (
         "eligible_own_funds_scr",
-        "Fonds propres éligibles couvrant le SCR total",
+        "Eligible own funds covering total group SCR",
         "currency",
     ),
-    "R0680": ("group_scr", "Capital de solvabilité requis total du Groupe", "currency"),
-    "R0690": ("scr_coverage_ratio", "Ratio de couverture du SCR total", "percentage"),
+    "R0680": ("group_scr", "Total group Solvency Capital Requirement", "currency"),
+    "R0690": ("scr_coverage_ratio", "Total group SCR coverage ratio", "percentage"),
+    "R0540": ("eligible_own_funds_scr", "Eligible own funds covering the SCR", "currency"),
+    "R0580": ("entity_scr", "Solvency Capital Requirement", "currency"),
+    "R0620": ("scr_coverage_ratio", "SCR coverage ratio", "percentage"),
 }
 
 
@@ -23,24 +26,55 @@ def compile_runtime_corpus(base_path: Path, processed_directory: Path, output_pa
         for line in (processed_directory / "facts.jsonl").read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+    extracted_chunks = [
+        json.loads(line)
+        for line in (processed_directory / "chunks.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+        if line.strip()
+    ]
     document_id = manifest["document_id"]
     corpus["documents"] = [item for item in corpus["documents"] if item["id"] != document_id]
     corpus["chunks"] = [item for item in corpus["chunks"] if item["document_id"] != document_id]
     corpus["documents"].append(
         {
             "id": document_id,
-            "folder": "Foyer / Annexes SFCR",
+            "folder": _folder(manifest["profile"]),
             "title": manifest["title"],
             "entity": manifest["entity"],
             "year": int(manifest["period"][:4]),
-            "document_type": "QRT public — PDF officiel",
+            "document_type": _document_type(manifest["profile"]),
             "version": f"{manifest['period']} / sha256-{manifest['sha256'][:16]}",
             "source_url": manifest["source_url"],
             "status": "reviewed",
             "pages": _count_lines(processed_directory / "pages.jsonl"),
-            "description": "Artefact extrait hors ligne et revu sur les cellules critiques.",
+            "description": _description(manifest["profile"]),
         }
     )
+    version = f"{manifest['period']} / sha256-{manifest['sha256'][:16]}"
+    for chunk in extracted_chunks:
+        if chunk["chunk_type"] == "table_row_group":
+            continue
+        provenance = chunk.get("provenance", [])
+        first_provenance = provenance[0] if provenance else {}
+        corpus["chunks"].append(
+            {
+                "id": chunk["id"],
+                "document_id": document_id,
+                "chunk_type": chunk["chunk_type"],
+                "text": chunk["contextualized_text"],
+                "locator": {
+                    "document_id": document_id,
+                    "document_title": manifest["title"],
+                    "version": version,
+                    "source_url": manifest["source_url"],
+                    "page": chunk["page_start"],
+                    "section_path": chunk.get("section_path", []),
+                    "bbox": first_provenance.get("bbox"),
+                },
+                "facts": [],
+            }
+        )
     for fact in facts:
         if fact["row_code"] not in ROW_FIELDS:
             continue
@@ -50,16 +84,21 @@ def compile_runtime_corpus(base_path: Path, processed_directory: Path, output_pa
         formatted = _format_value(fact["row_code"], value, unit)
         corpus["chunks"].append(
             {
-                "id": f"qrt-2025-s2301-{fact['row_code'].casefold()}-c0010",
+                "id": (
+                    f"{document_id}-{fact['table_id'].casefold().replace('.', '')}-"
+                    f"{fact['row_code'].casefold()}-{fact['column_code'].casefold()}"
+                ),
                 "document_id": document_id,
+                "chunk_type": "verified_table_evidence",
                 "text": (
-                    f"S.23.01.22 — {fact['row_code']}/C0010 : {fact['row_label']} : "
+                    f"{fact['table_id']} — {fact['row_code']}/{fact['column_code']}: "
+                    f"{fact['row_label']}: "
                     f"{fact['raw_value']}."
                 ),
                 "locator": {
                     "document_id": document_id,
                     "document_title": manifest["title"],
-                    "version": f"{manifest['period']} / sha256-{manifest['sha256'][:16]}",
+                    "version": version,
                     "source_url": manifest["source_url"],
                     "page": fact["provenance"]["page"],
                     "section_path": [fact["table_id"], "Fonds propres"],
@@ -72,10 +111,10 @@ def compile_runtime_corpus(base_path: Path, processed_directory: Path, output_pa
                     {
                         "field_id": field_id,
                         "label": label,
-                        "value": 287 if fact["row_code"] == "R0690" else value,
+                        "value": value * 100 if value_type == "percentage" else value,
                         "formatted_value": formatted,
                         "value_type": value_type,
-                        "unit": "%" if fact["row_code"] == "R0690" else unit,
+                        "unit": "%" if value_type == "percentage" else unit,
                         "period": f"{manifest['period']}-12-31",
                         "entity": manifest["entity"],
                     }
@@ -92,9 +131,25 @@ def _count_lines(path: Path) -> int:
 
 
 def _format_value(row_code: str, value: float, unit: str) -> str:
-    if row_code == "R0690":
+    if row_code in {"R0620", "R0690"}:
         return f"{value * 100:.0f} %"
-    return f"{value:,.0f} k€".replace(",", " ") if unit == "milliers EUR" else str(value)
+    if unit in {"milliers EUR", "thousand EUR"}:
+        return f"{value:,.0f} kEUR".replace(",", " ")
+    return str(value)
+
+
+def _folder(profile: str) -> str:
+    return "Foyer / SFCR Annexes" if profile == "qrt_table_heavy" else "Foyer / Reports"
+
+
+def _document_type(profile: str) -> str:
+    return "Official public QRT PDF" if profile == "qrt_table_heavy" else "Official narrative PDF"
+
+
+def _description(profile: str) -> str:
+    if profile == "qrt_table_heavy":
+        return "Offline-extracted artifact with explicitly verified prudential cells."
+    return "Offline-extracted narrative artifact with page-level provenance."
 
 
 def main() -> None:

@@ -10,14 +10,15 @@ def plan_queries(
 ) -> list[SearchQuery]:
     queries: list[SearchQuery] = []
     for field in profile.fields:
-        template = field.query_templates[0]
-        queries.append(
-            SearchQuery(
-                field_id=field.id,
-                field_label=field.label,
-                text=f"{question} | {template}",
-                document_ids=document_ids,
+        # Each template is an explicit, inspectable reformulation for one required
+        # field. This is deterministic query expansion, not an LLM call.
+        for template in field.query_templates:
+            queries.append(
+                SearchQuery(
+                    field_id=field.id,
+                    field_label=field.label,
+                    text=template,
+                    document_ids=document_ids,
+                )
             )
-        )
     return queries
-

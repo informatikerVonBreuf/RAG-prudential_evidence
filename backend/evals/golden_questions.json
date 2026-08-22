@@ -1,7 +1,7 @@
 [
   {
     "id": "qrt-prudential-coverage-complete",
-    "question": "Quels éléments publics caractérisent la couverture prudentielle du Groupe Foyer en 2025 ?",
+    "question": "What public evidence describes Groupe Foyer's prudential coverage in 2025?",
     "mode": "deep",
     "document_ids": ["foyer_group_qrt_2025"],
     "constraints": {"entity": "Groupe Foyer", "period": "2025"},
@@ -11,7 +11,7 @@
   },
   {
     "id": "qrt-wrong-period-not-found",
-    "question": "Quelle est la couverture prudentielle du Groupe Foyer en 2024 ?",
+    "question": "What was Groupe Foyer's prudential coverage in 2024?",
     "mode": "deep",
     "document_ids": ["foyer_group_qrt_2025"],
     "constraints": {"entity": "Groupe Foyer", "period": "2024"},
@@ -71,6 +71,37 @@
     "mode": "deep",
     "document_ids": ["foyer_annual_report_2025"],
     "expected_profile": "open_question",
+    "expected_status": "NOT_FOUND",
+    "expected_fields": []
+  },
+  {
+    "id": "foyer-assurances-prudential-complete",
+    "question": "What is Foyer Assurances SCR coverage in 2025?",
+    "mode": "deep",
+    "document_ids": ["foyer_assurances_qrt_2025"],
+    "constraints": {"entity": "Foyer Assurances S.A.", "period": "2025"},
+    "expected_profile": "entity_prudential_coverage",
+    "expected_status": "COMPLETE",
+    "expected_fields": ["eligible_own_funds_scr", "entity_scr", "scr_coverage_ratio"]
+  },
+  {
+    "id": "foyer-assurances-wrong-entity-not-found",
+    "question": "What is Foyer Assurances SCR coverage in 2025?",
+    "mode": "deep",
+    "document_ids": ["foyer_assurances_qrt_2025"],
+    "constraints": {"entity": "Foyer Global Health S.A.", "period": "2025"},
+    "expected_profile": "entity_prudential_coverage",
+    "expected_status": "NOT_FOUND",
+    "expected_fields": []
+  },
+  {
+    "id": "foyer-assurances-wrong-period-not-found",
+    "question": "What is Foyer Assurances SCR coverage in 2024?",
+    "mode": "deep",
+    "document_ids": ["foyer_assurances_qrt_2025"],
+    "constraints": {"entity": "Foyer Assurances S.A.", "period": "2024"},
+    "profile_id": "entity_prudential_coverage",
+    "expected_profile": "entity_prudential_coverage",
     "expected_status": "NOT_FOUND",
     "expected_fields": []
   }

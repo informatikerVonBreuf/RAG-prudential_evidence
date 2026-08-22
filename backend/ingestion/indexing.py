@@ -48,6 +48,40 @@ def build_embedding_cache(
     return manifest
 
 
+def build_runtime_embedding_cache(
+    chunks: list[object], output_directory: Path, provider: str = "gemini"
+) -> dict[str, object]:
+    """Build an embedding cache for promoted runtime chunks used by retrieval."""
+
+    texts = [str(chunk.text) for chunk in chunks]
+    if provider != "gemini":
+        raise ValueError("Runtime experiment currently supports only the Gemini provider.")
+    vectors, model = _gemini_embeddings(texts)
+    output_directory.mkdir(parents=True, exist_ok=True)
+    payload = {
+        str(chunk.id): vector
+        for chunk, vector in zip(chunks, vectors, strict=True)
+    }
+    (output_directory / "embeddings.json").write_text(
+        json.dumps(payload, ensure_ascii=False), encoding="utf-8"
+    )
+    manifest = {
+        "provider": "gemini",
+        "model": model,
+        "is_trained_embedding_model": True,
+        "task_type": "RETRIEVAL_DOCUMENT",
+        "dimensions": len(vectors[0]) if vectors else 0,
+        "chunks": len(chunks),
+        "content_sha256": hashlib.sha256(
+            "\n".join(f"{chunk.id}:{chunk.text}" for chunk in chunks).encode()
+        ).hexdigest(),
+    }
+    (output_directory / "embedding_manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    return manifest
+
+
 def _local_embeddings(texts: list[str]) -> tuple[list[list[float]], str]:
     model_path = os.getenv("LOCAL_EMBEDDING_MODEL_PATH", "").strip()
     if not model_path or not Path(model_path).exists():
@@ -64,8 +98,22 @@ def _gemini_embeddings(texts: list[str]) -> tuple[list[list[float]], str]:
     model = os.getenv("GEMINI_EMBEDDING_MODEL", "").strip()
     if not api_key or not model:
         raise RuntimeError("GEMINI_API_KEY et GEMINI_EMBEDDING_MODEL sont requis.")
+    try:
+        import truststore
+
+        truststore.inject_into_ssl()
+    except ImportError:
+        pass
     from google import genai
+    from google.genai import types
 
     client = genai.Client(api_key=api_key)
-    result = client.models.embed_content(model=model, contents=texts)
-    return [embedding.values for embedding in result.embeddings], model
+    vectors: list[list[float]] = []
+    for start in range(0, len(texts), 32):
+        result = client.models.embed_content(
+            model=model,
+            contents=texts[start : start + 32],
+            config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
+        )
+        vectors.extend(embedding.values for embedding in result.embeddings)
+    return vectors, model

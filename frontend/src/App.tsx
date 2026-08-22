@@ -123,7 +123,7 @@ export default function App() {
             <div><Icon name="library" /><span>Bibliothèque</span></div>
             <span className="count-badge">{selectedDocuments.length}/{documents.length}</span>
           </div>
-          <p className="panel-intro">Sélectionnez le périmètre interrogé. Le corpus déployé est en lecture seule.</p>
+          <p className="panel-intro">Six PDF publics en lecture seule : 3 rapports narratifs et 3 QRT tabulaires.</p>
           <div className="document-list">
             {documents.map((document) => (
               <label key={document.id} className={`document-card ${selectedDocuments.includes(document.id) ? "selected" : ""}`}>
@@ -245,6 +245,11 @@ function AnswerView({ answer, onEvidence }: { answer: AnswerPayload; onEvidence:
 
       <details className="trace-details">
         <summary>Piste d'audit de la récupération</summary>
+        <div>
+          <strong>Mapping · {answer.mapping_trace.decision_source}</strong>
+          <span>{answer.mapping_trace.profile_id} · confiance {answer.mapping_trace.confidence.toFixed(2)}</span>
+          <small>Entité {answer.mapping_trace.entity ?? "non contrainte"} · période {answer.mapping_trace.period ?? "non contrainte"}</small>
+        </div>
         {answer.query_trace.map((trace) => <div key={trace.field_id}><strong>{trace.field_id}</strong><span>{trace.query}</span><small>{trace.candidate_count} candidats · {trace.consulted_document_ids.length} documents</small></div>)}
       </details>
       <details className="trace-details">

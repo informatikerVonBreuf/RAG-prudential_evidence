@@ -100,6 +100,9 @@ class IngestionManifest(BaseModel):
     acquired_at: str
     extractor: str
     extractor_version: str | None = None
+    canonical_artifact: str = "document.md"
+    canonical_format: str = "docling_document_and_markdown"
+    chunker: str = "docling_hierarchical_chunker"
     output_directory: str
     warnings: list[str] = Field(default_factory=list)
 

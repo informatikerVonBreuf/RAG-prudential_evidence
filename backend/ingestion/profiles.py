@@ -10,7 +10,9 @@ def detect_document_profile(path: Path, sample_text: str = "") -> DocumentProfil
     normalized = f"{path.name} {sample_text[:5000]}".casefold()
     if suffix in {".html", ".htm"}:
         return DocumentProfile.HTML_REPORT
-    if "qrt" in normalized or "s.23.01" in normalized or "solvabilit" in normalized:
+    if "sfcr" in normalized or "solvency and financial condition report" in normalized:
+        return DocumentProfile.NARRATIVE_POLICY
+    if "qrt" in normalized or "s.23.01" in normalized:
         return DocumentProfile.QRT_TABLE_HEAVY
     if not sample_text.strip():
         return DocumentProfile.SCANNED_DOCUMENT

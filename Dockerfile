@@ -16,10 +16,9 @@ WORKDIR /app
 RUN addgroup --system app && adduser --system --ingroup app app
 COPY pyproject.toml ./
 COPY backend/ ./backend/
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir ".[online-models]"
 COPY --from=frontend-build /build/frontend/dist ./frontend/dist
 
 USER app
 EXPOSE 8000
 CMD ["sh", "-c", "uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port ${PORT}"]
-

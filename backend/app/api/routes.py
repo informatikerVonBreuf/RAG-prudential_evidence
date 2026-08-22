@@ -14,14 +14,14 @@ router = APIRouter(prefix="/api")
 def health() -> HealthPayload:
     return HealthPayload(
         corpus_version=store.corpus_version,
-        documents=len(store.documents),
+        documents=len(store.public_documents),
         chunks=len(store.chunks),
     )
 
 
 @router.get("/documents", response_model=list[DocumentView])
 def documents() -> list[DocumentView]:
-    return store.documents
+    return store.public_documents
 
 
 @router.get("/profiles")

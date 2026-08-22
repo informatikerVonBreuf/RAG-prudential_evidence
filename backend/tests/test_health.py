@@ -9,7 +9,7 @@ def test_health_describes_loaded_corpus() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "ok"
-    assert payload["documents"] == 4
+    assert payload["documents"] == 6
     assert payload["chunks"] >= 13
 
 
@@ -19,3 +19,12 @@ def test_documents_are_publicly_described() -> None:
     documents = response.json()
     assert any(document["status"] == "reviewed" for document in documents)
     assert all(document["source_url"].startswith("https://") for document in documents)
+
+
+def test_deployed_library_is_balanced_between_narrative_and_tabular_pdfs() -> None:
+    documents = client.get("/api/documents").json()
+    types = [document["document_type"] for document in documents]
+
+    assert len(documents) == 6
+    assert types.count("Official narrative PDF") == 3
+    assert types.count("Official public QRT PDF") == 3

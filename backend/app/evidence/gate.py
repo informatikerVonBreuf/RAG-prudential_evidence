@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 
+from app.domain.mapping import canonicalize_entity
 from app.domain.models import (
     AnswerStatus,
     Candidate,
@@ -49,9 +50,9 @@ class DeterministicEvidenceGate:
                     reasons: list[str] = []
                     if fact.value_type != field.value_type:
                         reasons.append(f"type {fact.value_type!r} au lieu de {field.value_type!r}")
-                    if constraints.entity and _normalize_context(fact.entity) != _normalize_context(
-                        constraints.entity
-                    ):
+                    if constraints.entity and canonicalize_entity(
+                        fact.entity
+                    ) != canonicalize_entity(constraints.entity):
                         reasons.append(
                             f"entité {fact.entity!r} au lieu de {constraints.entity!r}"
                         )

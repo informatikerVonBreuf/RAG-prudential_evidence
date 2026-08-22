@@ -20,10 +20,20 @@ class ArtifactStore:
         self.chunks = TypeAdapter(list[Chunk]).validate_python(raw["chunks"])
         self._documents_by_id = {item.id: item for item in self.documents}
 
+    @property
+    def public_documents(self) -> list[DocumentView]:
+        """Return the reviewer-facing corpus: three narrative PDFs and three QRTs.
+
+        Older web-page and synthetic fixtures stay loaded for regression tests, but
+        they are deliberately excluded from the deployed document library.
+        """
+        public_types = {"Official narrative PDF", "Official public QRT PDF"}
+        return [doc for doc in self.documents if doc.document_type in public_types]
+
     def selected_chunks(self, document_ids: list[str]) -> list[Chunk]:
         selected = set(document_ids)
         if not selected:
-            selected = {doc.id for doc in self.documents if doc.status != "synthetic"}
+            selected = {doc.id for doc in self.public_documents}
         return [chunk for chunk in self.chunks if chunk.document_id in selected]
 
     def validate_document_ids(self, document_ids: list[str]) -> list[str]:

@@ -94,6 +94,18 @@ export interface ModelCallTrace {
   detail: string;
 }
 
+export interface MappingTrace {
+  profile_id: string;
+  entity?: string | null;
+  period?: string | null;
+  confidence: number;
+  decision_source: "explicit" | "rules" | "hybrid_dense" | "llm_judge" | "abstention";
+  lexical_scores: Record<string, number>;
+  dense_scores: Record<string, number>;
+  ambiguities: string[];
+  model_calls: ModelCallTrace[];
+}
+
 export interface AnswerPayload {
   request_id: string;
   mode: Mode;
@@ -110,6 +122,7 @@ export interface AnswerPayload {
   latency_ms: number;
   generation_provider: string;
   model_calls: ModelCallTrace[];
+  mapping_trace: MappingTrace;
 }
 
 export interface SessionEntry {

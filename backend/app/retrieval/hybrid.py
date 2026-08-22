@@ -6,10 +6,10 @@ from app.retrieval.lexical import BM25Index
 
 
 class HybridRetriever:
-    def __init__(self, chunks: list[Chunk], rrf_constant: int = 60) -> None:
+    def __init__(self, chunks: list[Chunk], rrf_constant: int = 60, dense_index=None) -> None:
         self.chunks = chunks
         self.lexical = BM25Index(chunks)
-        self.dense = LocalDenseIndex(chunks)
+        self.dense = dense_index or LocalDenseIndex(chunks)
         self.rrf_constant = rrf_constant
 
     def search(self, query: SearchQuery, k: int = 5) -> list[Candidate]:
@@ -43,4 +43,3 @@ class HybridRetriever:
                 )
             )
         return sorted(candidates, key=lambda item: (-item.score.rrf_score, item.chunk.id))[:k]
-

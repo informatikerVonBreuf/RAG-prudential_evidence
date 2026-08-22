@@ -14,8 +14,9 @@ source publique → profil documentaire → extraction structurée
 
 - Docling est le moteur principal prévu pour la hiérarchie, les tableaux, les figures et
   les pages. `docling_converter.py` configure des pipelines distincts selon le profil.
-- PyMuPDF fournit la baseline réellement exécutée sur le QRT et le fallback ciblé. Son
-  usage est enregistré dans le manifeste ; il vérifie aussi les coordonnées des cellules.
+- Docling 2.121 est l'extracteur structurel réellement exécuté sur le QRT public 2025.
+- PyMuPDF fournit les coordonnées de pages, vérifie les trois cellules critiques et
+  constitue le fallback explicite si Docling échoue.
 - Gemini est optionnel pour les descriptions visuelles et les embeddings. Aucun appel
   n’est effectué sans clé et modèle configurés.
 
@@ -30,8 +31,14 @@ Chaque document obtient un dossier dans `data/processed/<document_id>/` :
 manifest.json         pages.jsonl          sections.json
 tables.jsonl          facts.jsonl          figures.jsonl
 chunks.jsonl          references.json      page_images/
+document.md           docling.md            docling.json
 indexes/embedding_manifest.json            indexes/embeddings.json
 ```
+
+`docling.json` est le cache structurel avec provenance. `document.md` en est la vue
+lisible destinée à la revue. Les chunks textuels sont produits par le
+`HierarchicalChunker` de Docling à partir du même modèle documentaire ; le fallback
+PyMuPDF n'est utilisé que si cette conversion échoue.
 
 `data/raw` et `data/processed` restent ignorés par Git, sauf leurs `.gitkeep`. Seuls les
 artefacts revus nécessaires au runtime sont promus dans `backend/app/data`.

@@ -59,7 +59,14 @@ GEMINI_API_KEY=votre_cle
 GEMINI_GENERATION_MODEL=gemini-2.5-flash
 GEMINI_EMBEDDING_MODEL=gemini-embedding-001
 RUN_ONLINE_EXPERIMENT=0
+RUN_VISUAL_ENRICHMENT=0
+ENABLE_HYBRID_MAPPING=0
 ```
+
+`ENABLE_HYBRID_MAPPING=1` enables Gemini only for questions whose deterministic
+profile score has no clear winner. Clear rules remain at zero calls; ambiguous questions
+use one embedding call, then at most one structured judge call. Identical decisions are
+cached in memory. Provider failure always falls back to `open_question` rather than guessing.
 
 Sans clé, la composition déterministe et la baseline hashing restent actives. Avec une
 clé, Gemini peut reformuler uniquement les preuves acceptées. Il ne décide jamais du
@@ -71,6 +78,20 @@ et génération), passer temporairement `RUN_ONLINE_EXPERIMENT=1`, exécuter la 
 puis remettre la valeur à `0`. Le runtime effectue son appel de synthèse Gemini pour
 chaque réponse couverte lorsque la clé et le modèle sont configurés. Le panneau
 « Appels modèles » affiche modèle, statut, tentatives et latence.
+
+Pour enrichir volontairement les figures durant l'ingestion hors ligne, passer
+`RUN_VISUAL_ENRICHMENT=1`. Chaque visuel retenu est envoyé avec sa légende et son
+contexte, puis la réponse structurée est conservée dans `figures.jsonl` et
+`document.md`. La valeur `0` garantit qu'aucun appel visuel n'est effectué.
+
+Si Docling a déjà produit le cache, ne pas relancer l'ingestion. Utiliser :
+
+```powershell
+pel-enrich-visuals data/processed/foyer_group_qrt_2025
+```
+
+Cette commande relit les images existantes, effectue uniquement les appels Gemini,
+puis régénère `figures.jsonl`, les chunks visuels, `document.md` et l'index.
 
 ## 5. Contrôler la V1
 

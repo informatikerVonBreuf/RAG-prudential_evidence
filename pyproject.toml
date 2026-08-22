@@ -32,6 +32,8 @@ ingestion = [
 ]
 online-models = [
   "google-genai>=1.30,<2",
+  "python-dotenv>=1.1,<2",
+  "truststore>=0.10,<1",
 ]
 local-models = [
   "sentence-transformers>=5,<6",
@@ -41,6 +43,11 @@ local-models = [
 [project.scripts]
 pel-ingest = "ingestion.cli:main"
 pel-build-corpus = "ingestion.promote:main"
+pel-render-document = "ingestion.render:main"
+pel-enrich-visuals = "ingestion.enrich_visuals:main"
+pel-refresh-qrt-evidence = "ingestion.refresh_qrt_evidence:main"
+pel-update-metadata = "ingestion.update_metadata:main"
+pel-promote-many = "ingestion.promote_many:main"
 
 [tool.setuptools.packages.find]
 where = ["backend"]

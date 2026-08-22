@@ -1,7 +1,63 @@
+from app.domain.profiles import explain_question_mapping, map_question
 from app.main import app
 from fastapi.testclient import TestClient
 
 client = TestClient(app)
+
+
+def test_mapping_explanation_exposes_selected_profile_and_trigger_score() -> None:
+    rows = explain_question_mapping(
+        "What public evidence describes Groupe Foyer's prudential coverage in 2025?"
+    )
+    selected = [row for row in rows if row["selected"]]
+
+    assert len(selected) == 1
+    assert selected[0]["profile_id"] == "prudential_coverage"
+    assert selected[0]["score"] >= 3
+    assert "prudential" in selected[0]["matched_triggers"]
+
+
+def test_solo_entity_prudential_question_uses_solo_contract() -> None:
+    profile = map_question("What is Foyer Assurances SCR coverage in 2025?")
+    assert profile.id == "entity_prudential_coverage"
+    assert {field.id for field in profile.fields} == {
+        "eligible_own_funds_scr",
+        "entity_scr",
+        "scr_coverage_ratio",
+    }
+
+
+def test_solo_entity_prudential_evidence_respects_entity_and_period() -> None:
+    base_request = {
+        "question": "What is Foyer Assurances SCR coverage in 2025?",
+        "mode": "deep",
+        "scope": {"document_ids": ["foyer_assurances_qrt_2025"]},
+    }
+    complete = client.post(
+        "/api/query",
+        json={
+            **base_request,
+            "constraints": {"entity": "Foyer Assurances S.A.", "period": "2025"},
+        },
+    ).json()
+    wrong_entity = client.post(
+        "/api/query",
+        json={
+            **base_request,
+            "constraints": {"entity": "Foyer Global Health S.A.", "period": "2025"},
+        },
+    ).json()
+    wrong_period = client.post(
+        "/api/query",
+        json={
+            **base_request,
+            "constraints": {"entity": "Foyer Assurances S.A.", "period": "2024"},
+        },
+    ).json()
+
+    assert complete["status"] == "COMPLETE"
+    assert wrong_entity["status"] == "NOT_FOUND"
+    assert wrong_period["status"] == "NOT_FOUND"
 
 
 def test_deep_question_is_complete_and_cited() -> None:
@@ -17,6 +73,8 @@ def test_deep_question_is_complete_and_cited() -> None:
     payload = response.json()
     assert payload["status"] == "COMPLETE"
     assert payload["profile_id"] == "public_position"
+    assert payload["mapping_trace"]["decision_source"] == "rules"
+    assert payload["mapping_trace"]["model_calls"] == []
     assert len(payload["claims"]) == 3
     assert not payload["missing_fields"]
     accepted_ids = {item["id"] for item in payload["evidence"] if item["state"] == "ACCEPTED"}
@@ -139,8 +197,8 @@ def test_real_qrt_coverage_contract_is_complete_and_cell_cited() -> None:
         "/api/query",
         json={
             "question": (
-                "Quels éléments publics caractérisent la couverture prudentielle "
-                "du Groupe Foyer en 2025 ?"
+                "What public evidence describes Groupe Foyer's prudential coverage "
+                "in 2025?"
             ),
             "scope": {"document_ids": ["foyer_group_qrt_2025"]},
             "constraints": {"entity": "Groupe Foyer", "period": "2025"},

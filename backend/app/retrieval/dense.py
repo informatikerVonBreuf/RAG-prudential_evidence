@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
+import os
+from pathlib import Path
 
 from app.domain.models import Chunk
 from app.retrieval.text import tokenize
@@ -30,6 +33,8 @@ def _hash_embedding(text: str, dimensions: int = 384) -> list[float]:
 
 
 class LocalDenseIndex:
+    provider = "hashing-baseline"
+
     def __init__(self, chunks: list[Chunk]) -> None:
         self.chunks = chunks
         self.vectors = [_hash_embedding(chunk.text) for chunk in chunks]
@@ -42,3 +47,63 @@ class LocalDenseIndex:
         ]
         return sorted(results, key=lambda item: (-item[1], item[0].id))
 
+
+class GeminiDenseIndex:
+    """Gemini query embeddings over cached Gemini document vectors."""
+
+    provider = "gemini"
+
+    def __init__(self, chunks: list[Chunk], index_directory: Path) -> None:
+        manifest_path = index_directory / "embedding_manifest.json"
+        vectors_path = index_directory / "embeddings.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        cached = json.loads(vectors_path.read_text(encoding="utf-8"))
+        if manifest.get("provider") != "gemini" or not manifest.get(
+            "is_trained_embedding_model"
+        ):
+            raise ValueError("The selected cache is not a trained Gemini embedding index.")
+        missing = [chunk.id for chunk in chunks if chunk.id not in cached]
+        if missing:
+            raise ValueError(f"Gemini cache is missing {len(missing)} selected chunks.")
+        self.chunks = chunks
+        self.vectors = [cached[chunk.id] for chunk in chunks]
+        self.model = str(manifest["model"])
+        self.query_cache_path = index_directory / "query_embeddings.json"
+        self.query_cache = (
+            json.loads(self.query_cache_path.read_text(encoding="utf-8"))
+            if self.query_cache_path.exists()
+            else {}
+        )
+
+    def search(self, query: str) -> list[tuple[Chunk, float]]:
+        cache_key = hashlib.sha256(f"{self.model}:{query}".encode()).hexdigest()
+        query_vector = self.query_cache.get(cache_key)
+        if query_vector is None:
+            api_key = os.getenv("GEMINI_API_KEY", "").strip()
+            if not api_key:
+                raise RuntimeError("GEMINI_API_KEY is required for dense query embedding.")
+            try:
+                import truststore
+
+                truststore.inject_into_ssl()
+            except ImportError:
+                pass
+            from google import genai
+            from google.genai import types
+
+            client = genai.Client(api_key=api_key)
+            response = client.models.embed_content(
+                model=self.model,
+                contents=query,
+                config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY"),
+            )
+            query_vector = response.embeddings[0].values
+            self.query_cache[cache_key] = query_vector
+            self.query_cache_path.write_text(
+                json.dumps(self.query_cache, ensure_ascii=False), encoding="utf-8"
+            )
+        results = [
+            (chunk, sum(left * right for left, right in zip(query_vector, vector, strict=True)))
+            for chunk, vector in zip(self.chunks, self.vectors, strict=True)
+        ]
+        return sorted(results, key=lambda item: (-item[1], item[0].id))

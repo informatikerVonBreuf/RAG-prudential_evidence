@@ -4,8 +4,8 @@ import asyncio
 import time
 import uuid
 
+from app.domain.mapping import HybridQuestionMapper
 from app.domain.models import AnswerPayload, QueryTrace, QuestionRequest
-from app.domain.profiles import map_question
 from app.evidence.gate import DeterministicEvidenceGate
 from app.generation.composer import GroundedComposer
 from app.generation.providers import OptionalGeminiComposer
@@ -20,11 +20,17 @@ class EvidenceEngine:
         self.gate = DeterministicEvidenceGate()
         self.composer = GroundedComposer()
         self.online_composer = OptionalGeminiComposer()
+        self.mapper = HybridQuestionMapper()
         self._retrievers: dict[tuple[str, ...], HybridRetriever] = {}
 
     async def answer(self, request: QuestionRequest) -> AnswerPayload:
         started = time.perf_counter()
-        profile = map_question(request.question, request.profile_id)
+        mapped = self.mapper.map(
+            request.question,
+            explicit_profile_id=request.profile_id,
+            explicit_constraints=request.constraints,
+        )
+        profile = mapped.profile
         requested_scope = self.store.validate_document_ids(request.scope.document_ids)
         selected_chunks = self.store.selected_chunks(requested_scope)
         selected_document_ids = sorted({chunk.document_id for chunk in selected_chunks})
@@ -37,8 +43,15 @@ class EvidenceEngine:
 
         tasks = [asyncio.to_thread(retriever.search, query, 5) for query in queries]
         candidate_batches = await asyncio.gather(*tasks)
-        candidates = [candidate for batch in candidate_batches for candidate in batch]
-        gate_result = self.gate.evaluate(profile, candidates, request.constraints)
+        unique_candidates = {}
+        for batch in candidate_batches:
+            for candidate in batch:
+                key = (candidate.field_id, candidate.chunk.id)
+                current = unique_candidates.get(key)
+                if current is None or candidate.score.rrf_score > current.score.rrf_score:
+                    unique_candidates[key] = candidate
+        candidates = list(unique_candidates.values())
+        gate_result = self.gate.evaluate(profile, candidates, mapped.constraints)
         summary, claims = self.composer.compose(
             question=request.question,
             mode=request.mode,
@@ -79,7 +92,8 @@ class EvidenceEngine:
             query_trace=traces,
             latency_ms=latency_ms,
             generation_provider=generation_provider,
-            model_calls=[online_result.trace],
+            model_calls=[*mapped.decision.model_calls, online_result.trace],
+            mapping_trace=mapped.decision.model_dump(mode="json"),
         )
 
 

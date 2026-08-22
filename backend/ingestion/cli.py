@@ -4,6 +4,8 @@ import argparse
 import json
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from ingestion.pipeline import ingest_pdf
 
 
@@ -16,10 +18,12 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--period", required=True)
     command.add_argument("--source-url", required=True)
     command.add_argument("--output-root", type=Path, default=Path("data/processed"))
+    command.add_argument("--max-characters", type=int, default=1800)
     return command
 
 
 def main() -> None:
+    load_dotenv()
     args = parser().parse_args()
     result = ingest_pdf(
         path=args.path,
@@ -29,6 +33,7 @@ def main() -> None:
         period=args.period,
         source_url=args.source_url,
         output_root=args.output_root,
+        max_characters=args.max_characters,
     )
     print(json.dumps({
         "manifest": result.manifest.model_dump(mode="json"),

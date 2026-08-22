@@ -6,14 +6,21 @@ from pathlib import Path
 
 from ingestion.models import PageArtifact, Provenance, TableArtifact, TableCellArtifact
 
-QRT_CELLS = {
-    "R0660": (
-        "Total des fonds propres éligibles pour couvrir le SCR total du groupe",
-        "currency",
-        "milliers EUR",
-    ),
-    "R0680": ("Capital de solvabilité requis total du groupe", "currency", "milliers EUR"),
-    "R0690": ("Ratio total des fonds propres éligibles sur SCR total du groupe", "ratio", "ratio"),
+QRT_TEMPLATES = {
+    "S.23.01.22": {
+        "R0660": (
+            "Total eligible own funds to meet the consolidated group SCR",
+            "currency",
+            "thousand EUR",
+        ),
+        "R0680": ("Consolidated group SCR", "currency", "thousand EUR"),
+        "R0690": ("Ratio of eligible own funds to consolidated group SCR", "ratio", "ratio"),
+    },
+    "S.23.01.01": {
+        "R0540": ("Eligible own funds to meet the SCR", "currency", "thousand EUR"),
+        "R0580": ("SCR", "currency", "thousand EUR"),
+        "R0620": ("Ratio of eligible own funds to SCR", "ratio", "ratio"),
+    },
 }
 
 
@@ -55,12 +62,19 @@ def extract_qrt_coverage_table(
 
     warnings: list[str] = []
     cells: list[TableCellArtifact] = []
+    selected_template: str | None = None
+    expected_cells: dict[str, tuple[str, str, str]] = {}
     with pymupdf.open(path) as document:
         for page_index, page in enumerate(document):
             text = page.get_text("text", sort=True)
-            if "S.23.01.22" not in text:
+            template_id = next(
+                (template for template in QRT_TEMPLATES if template in text), None
+            )
+            if template_id is None:
                 continue
-            for row_code, (label, value_type, unit) in QRT_CELLS.items():
+            selected_template = template_id
+            expected_cells = QRT_TEMPLATES[template_id]
+            for row_code, (label, value_type, unit) in expected_cells.items():
                 matches = page.search_for(row_code)
                 if not matches:
                     continue
@@ -72,7 +86,7 @@ def extract_qrt_coverage_table(
                 ]
                 numeric = _first_numeric_word(words_to_right)
                 if numeric is None:
-                    warnings.append(f"Valeur introuvable pour {row_code} page {page_index + 1}")
+                    warnings.append(f"Value not found for {row_code} on page {page_index + 1}")
                     continue
                 raw_value, normalized, value_box = numeric
                 bbox = list(row_box | value_box)
@@ -92,13 +106,14 @@ def extract_qrt_coverage_table(
                         ),
                     )
                 )
-    if {cell.row_code for cell in cells} != set(QRT_CELLS):
-        warnings.append("Le triplet QRT R0660/R0680/R0690 n'est pas entièrement extrait.")
+    if not selected_template or {cell.row_code for cell in cells} != set(expected_cells):
+        expected = "/".join(expected_cells) if expected_cells else "SCR coverage"
+        warnings.append(f"The expected QRT evidence cells ({expected}) were not fully extracted.")
         return None, warnings
     return (
         TableArtifact(
-            id="S.23.01.22",
-            title="Fonds propres",
+            id=selected_template,
+            title="Own funds and solvency capital requirement",
             entity=entity,
             period=period,
             pages=sorted({cell.provenance.page for cell in cells}),

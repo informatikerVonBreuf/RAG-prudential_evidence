@@ -101,6 +101,7 @@ class Fact(BaseModel):
 class Chunk(BaseModel):
     id: str
     document_id: str
+    chunk_type: str = "text"
     text: str
     locator: SourceLocator
     facts: list[Fact] = Field(default_factory=list)
@@ -180,6 +181,7 @@ class AnswerPayload(BaseModel):
     latency_ms: int
     generation_provider: str = "deterministic"
     model_calls: list[ModelCallTrace] = Field(default_factory=list)
+    mapping_trace: dict[str, object] = Field(default_factory=dict)
 
 
 class HealthPayload(BaseModel):
