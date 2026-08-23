@@ -48,11 +48,13 @@ class QuestionRequest(BaseModel):
     scope: ScopeSelection = Field(default_factory=ScopeSelection)
     constraints: EvidenceConstraints = Field(default_factory=EvidenceConstraints)
     profile_id: str | None = None
+    conversation_context: str | None = Field(default=None, max_length=1600)
 
 
 class EvidenceField(BaseModel):
     id: str
     label: str
+    label_en: str | None = None
     value_type: Literal["text", "integer", "decimal", "percentage", "currency"]
     required: bool = True
     query_templates: list[str]
@@ -62,7 +64,9 @@ class EvidenceProfile(BaseModel):
     id: str
     version: str
     label: str
+    label_en: str | None = None
     description: str
+    description_en: str | None = None
     triggers: list[str]
     fields: list[EvidenceField]
 

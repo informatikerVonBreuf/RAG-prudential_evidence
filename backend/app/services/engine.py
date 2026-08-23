@@ -55,7 +55,12 @@ class EvidenceEngine:
         requested_scope = self.store.validate_document_ids(request.scope.document_ids)
         selected_chunks = self.store.selected_chunks(requested_scope)
         selected_document_ids = sorted({chunk.document_id for chunk in selected_chunks})
-        queries = plan_queries(request.question, profile, selected_document_ids)
+        queries = plan_queries(
+            request.question,
+            profile,
+            selected_document_ids,
+            request.conversation_context,
+        )
         scope_key = tuple(selected_document_ids)
         retriever = self._retrievers.get(scope_key)
         if retriever is None:

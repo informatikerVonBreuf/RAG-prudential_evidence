@@ -31,9 +31,16 @@ def profiles() -> list[dict[str, object]]:
             "id": profile.id,
             "version": profile.version,
             "label": profile.label,
+            "label_en": profile.label_en,
             "description": profile.description,
+            "description_en": profile.description_en,
             "fields": [
-                {"id": field.id, "label": field.label, "required": field.required}
+                {
+                    "id": field.id,
+                    "label": field.label,
+                    "label_en": field.label_en,
+                    "required": field.required,
+                }
                 for field in profile.fields
             ],
         }

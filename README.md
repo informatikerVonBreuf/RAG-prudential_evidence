@@ -7,6 +7,8 @@ Generation) architecture. User questions map to evidence contracts, are decompos
 field queries, retrieved by multiple channels, validated deterministically, and composed
 into traceable answers with per-assertion citations.
 
+**Live demo:** https://prudential-evidence-lab.onrender.com/
+
 ---
 
 📌 Quick links: [Overview](#overview) • [Features](#key-capabilities) • [Tech & Structure](#project-structure) • [Quick Start](#quickstart) • [Usage](#usage)
@@ -31,8 +33,10 @@ corpus is small and curated for demo purposes only.
 
 - 📚 RAG System — BM25 + targeted Gemini 3072-dimensional cache + explicit hashing fallback + RRF
 - 🧭 Evidence Profiles — Versioned mapping from intents to fields and checks
+- 🌍 Bilingual Contracts — French/English labels, triggers, examples and field reformulations
 - 🌐 Multimodal Support — Handles text, tables, and document fragments
-- 🐍 Python + Web UI — FastAPI backend and React/TypeScript frontend
+- 🐍 Python + Web UI — FastAPI backend and responsive React/TypeScript frontend
+- 🧠 Auditable Continuity — Resumable local threads with bounded memory built only from accepted facts
 
 ## Project Structure
 
@@ -76,6 +80,13 @@ Frontend: http://localhost:5173 — API docs: http://localhost:8000/docs
 - API endpoints: [backend/app/api/routes.py](backend/app/api/routes.py)
 - Frontend: [frontend/src](frontend/src)
 - Eval harness: [backend/app/evals/run_evals.py](backend/app/evals/run_evals.py)
+
+The landing page exposes three tested workflows for each interaction mode. Selecting a
+scenario also selects its reviewed public QRT. After a response, the composer clears while
+the answer remains inspectable. A saved thread can be reopened and continued; its bounded
+context contains the validated profile, accepted facts, entity, period and missing fields,
+not a free-form conversation summary. Browser persistence is optional and no server-side
+user history is created.
 
 ## Demonstrated case: public QRT 2025
 
@@ -123,8 +134,5 @@ Note: Render free tier may sleep; persistent storage is not guaranteed. Bake dur
   them only for a single-document scope, where they are unambiguous
 - Corpus intentionally small; for >50k chunks use Qdrant/pgvector/FAISS
 - No user accounts, ingestion workers, or production orchestration in the MVP
+- Conversation history is browser-local and is not suitable for shared or regulated records
 - Complex PDF table extraction is an offline ingestion pipeline (`backend/ingestion/README.md`)
-
----
-
-Would you like the same visual/emoji style applied to [docs/architecture/README.md](docs/architecture/README.md)?

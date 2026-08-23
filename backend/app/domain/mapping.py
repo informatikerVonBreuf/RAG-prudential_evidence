@@ -23,22 +23,29 @@ PROFILE_EXAMPLES: dict[str, tuple[str, ...]] = {
     "prudential_coverage": (
         "What is Groupe Foyer's SCR coverage ratio?",
         "Group eligible own funds and solvency capital requirement",
+        "Quelle est la couverture prudentielle du Groupe Foyer ?",
+        "Fonds propres éligibles, SCR et ratio de solvabilité du Groupe",
     ),
     "entity_prudential_coverage": (
         "What is Foyer Assurances SCR coverage?",
         "Solvency ratio for Foyer Global Health legal entity",
+        "Quel est le ratio de couverture SCR de Foyer Assurances ?",
+        "Couverture du capital de solvabilité requis de Foyer Global Health",
     ),
     "public_position": (
         "What is the Group's public financial and market position?",
         "Equity, market share and business areas of Groupe Foyer",
+        "Capitaux propres, part de marché et activités du Groupe Foyer",
     ),
     "customer_operations": (
         "Customer satisfaction, claims handling and insured households",
         "MyFoyer users and operational customer indicators",
+        "Satisfaction clients, sinistres et ménages assurés",
     ),
     "international_health": (
         "Global Health countries, premiums and employees",
         "International health insurance activity key figures",
+        "Pays, primes et effectifs de l'activité santé internationale",
     ),
 }
 
@@ -235,7 +242,10 @@ class HybridQuestionMapper:
 
     def _entity_priority(self, question: str, entity: str | None) -> EvidenceProfile | None:
         tokens = set(_normalize(question).split())
-        prudential = bool(tokens & {"scr", "solvency", "prudential", "coverage"})
+        prudential = bool(tokens & {
+            "scr", "solvency", "prudential", "coverage", "prudentiel", "prudentielle",
+            "solvabilite", "couverture",
+        })
         if entity in {"Foyer Assurances S.A.", "Foyer Global Health S.A."} and prudential:
             return self._profile("entity_prudential_coverage")
         if entity == "Foyer Global Health S.A.":

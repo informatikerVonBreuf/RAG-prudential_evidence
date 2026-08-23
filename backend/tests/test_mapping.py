@@ -1,3 +1,4 @@
+import pytest
 from app.domain.mapping import (
     HybridQuestionMapper,
     canonicalize_entity,
@@ -16,6 +17,23 @@ def test_known_entity_alias_and_period_are_extracted_without_model_call() -> Non
     assert mapped.constraints.period == "2025"
     assert mapped.decision.decision_source == "rules"
     assert mapped.decision.model_calls == []
+
+
+def test_french_group_prudential_question_maps_deterministically() -> None:
+    mapper = HybridQuestionMapper()
+    mapper.online_enabled = False
+    mapped = mapper.map(
+        "Quels éléments publics caractérisent la couverture prudentielle "
+        "du Groupe Foyer en 2025 ?"
+    )
+
+    assert mapped.profile.id == "prudential_coverage"
+    assert mapped.constraints.entity == "Groupe Foyer"
+    assert mapped.constraints.period == "2025"
+    assert mapped.decision.decision_source == "rules"
+    assert mapped.decision.lexical_scores["prudential_coverage"] > mapped.decision.lexical_scores[
+        "public_position"
+    ]
 
 
 def test_explicit_constraints_override_question_extraction() -> None:
@@ -79,3 +97,59 @@ def test_multi_period_question_abstains_without_explicit_constraint() -> None:
 
     assert mapped.profile.id == "open_question"
     assert mapped.decision.decision_source == "abstention"
+
+
+def test_french_legal_entity_prudential_wording_has_priority() -> None:
+    mapped = HybridQuestionMapper().map(
+        "Analyse la couverture prudentielle de Foyer Global Health en 2025."
+    )
+
+    assert mapped.profile.id == "entity_prudential_coverage"
+    assert mapped.constraints.entity == "Foyer Global Health S.A."
+
+
+def test_bilingual_profiles_expose_complete_metadata() -> None:
+    from app.domain.profiles import list_profiles
+
+    for profile in list_profiles():
+        assert profile.label and profile.label_en
+        assert profile.description and profile.description_en
+        for field in profile.fields:
+            assert field.label and field.label_en
+            assert len(field.query_templates) >= 2
+
+
+@pytest.mark.parametrize(
+    ("question", "expected_profile"),
+    [
+        (
+            "Quel est le ratio de couverture SCR du Groupe Foyer en 2025 ?",
+            "prudential_coverage",
+        ),
+        (
+            "Quel est le niveau de couverture SCR de Foyer Assurances en 2025 ?",
+            "entity_prudential_coverage",
+        ),
+        ("What is Foyer Global Health SCR coverage in 2025?", "entity_prudential_coverage"),
+        (
+            "Présente une synthèse structurée de la couverture prudentielle "
+            "du Groupe Foyer en 2025.",
+            "prudential_coverage",
+        ),
+        (
+            "Résume la position de solvabilité publiée par Foyer Assurances en 2025.",
+            "entity_prudential_coverage",
+        ),
+        (
+            "Summarise Foyer Global Health's published solvency position for 2025.",
+            "entity_prudential_coverage",
+        ),
+    ],
+)
+def test_recruiter_ui_examples_map_deterministically(
+    question: str, expected_profile: str
+) -> None:
+    mapped = HybridQuestionMapper().map(question)
+
+    assert mapped.profile.id == expected_profile
+    assert mapped.decision.decision_source == "rules"

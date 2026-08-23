@@ -10,6 +10,16 @@
     "expected_fields": ["eligible_own_funds_scr", "group_scr", "scr_coverage_ratio"]
   },
   {
+    "id": "qrt-prudential-coverage-complete-french",
+    "question": "Quels éléments publics caractérisent la couverture prudentielle du Groupe Foyer en 2025 ?",
+    "mode": "deep",
+    "document_ids": ["foyer_group_qrt_2025"],
+    "constraints": {"entity": "Groupe Foyer", "period": "2025"},
+    "expected_profile": "prudential_coverage",
+    "expected_status": "COMPLETE",
+    "expected_fields": ["eligible_own_funds_scr", "group_scr", "scr_coverage_ratio"]
+  },
+  {
     "id": "qrt-wrong-period-not-found",
     "question": "What was Groupe Foyer's prudential coverage in 2024?",
     "mode": "deep",

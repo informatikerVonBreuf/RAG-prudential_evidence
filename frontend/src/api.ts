@@ -19,11 +19,19 @@ export async function askQuestion(
   mode: Mode,
   documentIds: string[],
   constraints?: { entity?: string; period?: string },
+  options?: { profileId?: string; conversationContext?: string },
 ): Promise<AnswerPayload> {
   const response = await fetch("/api/query", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question, mode, scope: { document_ids: documentIds }, constraints }),
+    body: JSON.stringify({
+      question,
+      mode,
+      scope: { document_ids: documentIds },
+      constraints,
+      profile_id: options?.profileId,
+      conversation_context: options?.conversationContext,
+    }),
   });
   if (!response.ok) {
     const message = response.status === 422 ? "La question n'est pas valide." : `Erreur API (${response.status})`;

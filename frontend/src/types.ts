@@ -136,9 +136,20 @@ export interface AnswerPayload {
   retrieval_run: RetrievalRunTrace;
 }
 
-export interface SessionEntry {
+export interface ConversationTurn {
   id: string;
   createdAt: string;
   question: string;
   answer: AnswerPayload;
+}
+
+export interface SessionEntry {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  mode: Mode;
+  documentIds: string[];
+  turns: ConversationTurn[];
+  memory: string;
 }
