@@ -1,110 +1,170 @@
-# 📊 Prudential Evidence Lab
+# Prudential Evidence Lab
 
-![AI Agents](https://img.shields.io/badge/AI%20AGENTS-646cff?style=flat-square&logo=ai) ![Advanced](https://img.shields.io/badge/ADVANCED-0078d4?style=flat-square) ![RAG System](https://img.shields.io/badge/RAG%20SYSTEM-8a2be2?style=flat-square) ![Production](https://img.shields.io/badge/PRODUCTION-2ecc71?style=flat-square)
+An auditable document-research application built from public Groupe Foyer reports and
+Solvency II QRTs. It turns a user question into a versioned evidence contract, retrieves
+the required facts independently, verifies scope, entity and period, and only then composes
+a cited answer.
 
-An auditable document assistant demonstrating a framework-less RAG (Retrieval-Augmented
-Generation) architecture. User questions map to evidence contracts, are decomposed into
-field queries, retrieved by multiple channels, validated deterministically, and composed
-into traceable answers with per-assertion citations.
+**Live application:** https://prudential-evidence-lab.onrender.com/
 
-**Live demo:** https://prudential-evidence-lab.onrender.com/
+> Demo tip: click **Nouvelle analyse** before testing a different scenario. This clears the
+> active conversation context and recalculates the mapping, retrieval scope and answer status.
 
----
+## Why this project
 
-📌 Quick links: [Overview](#overview) • [Features](#key-capabilities) • [Tech & Structure](#project-structure) • [Quick Start](#quickstart) • [Usage](#usage)
+A conventional RAG can return a fluent answer while silently omitting a required fact,
+mixing legal entities or using evidence from the wrong reporting period. Prudential Evidence
+Lab makes these failure modes visible. A response is classified as `COMPLETE`, `PARTIAL`,
+`CONFLICT` or `NOT_FOUND` by code, not by the generation model.
 
----
+The project demonstrates one coherent workflow for the three retrieval patterns discussed
+in the accompanying engineering brief:
 
-## Overview
+- `sequential_top1` for a single-field contract;
+- `batch_multi_field` for a multi-evidence contract;
+- bounded reference resolution and explicit stopping conditions.
 
-This repo is a deployment-ready prototype focused on traceability and reproducibility. Every
-assertion includes a citation (page, section, table/cell, scores) and deterministic logic
-decides claim statuses (`COMPLETE`, `PARTIAL`, `NOT_FOUND`, `CONFLICT`). The embedded
-corpus is small and curated for demo purposes only.
+## What is implemented
 
-## Problem Solved
+- Six public 2025 PDFs: three narrative reports and three tabular QRTs
+- Offline PDF processing with Docling and a PyMuPDF fallback
+- Reviewed Markdown artifacts for text, tables and Gemini-described figures
+- Structure-aware chunks carrying document, page, section, table, row and cell provenance
+- Rich, versioned French/English evidence profiles
+- Deterministic entity and period extraction with abstention on unresolved ambiguity
+- Rules-first intent mapping, optional Gemini similarity and a bounded LLM judge only for
+  genuinely ambiguous cases
+- Explicit query reformulation for every required evidence field
+- Hybrid retrieval using BM25, Gemini dense embeddings and Reciprocal Rank Fusion (RRF)
+- Controlled widening through `k=1 → 3 → 5`
+- Resolution of explicit `see section` / `voir section` references, with at most three
+  followed references per batch
+- Stop reasons exposed as `contract_complete`, `conflict` or `budget_exhausted`
+- A deterministic evidence gate enforcing scope, entity, period and fact compatibility
+- Gemini synthesis restricted to accepted evidence, with deterministic composition available
+- Per-claim citations and visible lexical, dense and RRF traces
+- Responsive React interface with quick, deep-analysis and structured-summary workflows
+- Resumable browser-local threads with bounded memory derived only from accepted facts
 
-- ⚡ Speeds up large-scale document research from hours to minutes
-- 🔎 Extracts and synthesizes multi-format data (text, tables, PDFs)
-- 🔁 Maintains research continuity across multi-step workflows
-- 🧾 Provides cited, traceable analysis for compliance and validation
+No LangChain or LlamaIndex abstraction is used. The mapping, planning, retrieval,
+orchestration, evidence validation and answer contracts are directly inspectable in the code.
 
-## Key Capabilities
+## Demonstrated prudential contract
 
-- 📚 RAG System — BM25 + targeted Gemini 3072-dimensional cache + explicit hashing fallback + RRF
-- 🧭 Evidence Profiles — Versioned mapping from intents to fields and checks
-- 🌍 Bilingual Contracts — French/English labels, triggers, examples and field reformulations
-- 🌐 Multimodal Support — Handles text, tables, and document fragments
-- 🐍 Python + Web UI — FastAPI backend and responsive React/TypeScript frontend
-- 🧠 Auditable Continuity — Resumable local threads with bounded memory built only from accepted facts
+The primary use case asks for Groupe Foyer's published 2025 prudential coverage. The contract
+requires three separately retrieved and verified fields from public table `S.23.01.22`:
 
-## Project Structure
+| Required field | QRT locator |
+|---|---|
+| Eligible own funds covering the Group SCR | `R0660 / C0010` |
+| Group Solvency Capital Requirement | `R0680 / C0010` |
+| Group SCR coverage ratio | `R0690 / C0010` |
 
+The answer can only be `COMPLETE` when all required fields pass the gate for the requested
+entity, period and document scope. The same pattern is implemented for the Foyer Assurances
+and Foyer Global Health legal-entity QRTs.
+
+## Architecture
+
+```text
+User question
+    ↓
+Bilingual intent mapping + entity/period extraction
+    ↓
+Versioned evidence profile
+    ↓
+One inspectable query set per required field
+    ↓
+BM25 + Gemini dense retrieval → RRF
+    ↓
+Bounded retrieval loop + explicit reference resolution
+    ↓
+Deterministic evidence gate
+    ↓
+Cited deterministic/Gemini composition
+    ↓
+Business UI + coverage, source and model-call traces
 ```
-backend/app/domain        # Pydantic contracts and evidence profiles
-backend/app/retrieval     # BM25, dense baseline, RRF, planner
-backend/app/evidence      # Deterministic gate (proof control)
-backend/app/generation    # Composer and claim assembly
-backend/app/api           # FastAPI endpoints and OpenAPI schema
-frontend/src              # React UI + evidence viewer
-docs/architecture         # Code-linked diagrams and mappings
-.github/workflows         # CI and container build
-```
 
-See [docs/architecture/README.md](docs/architecture/README.md) for diagrams and contract-to-code mappings.
-See [docs/OPERATIONS.md](docs/OPERATIONS.md) for the complete offline-ingestion, Gemini,
-Docker and deployment runbook.
+| Layer | Main implementation |
+|---|---|
+| Business contracts and mapping | `backend/app/domain` |
+| Retrieval planner and hybrid search | `backend/app/retrieval` |
+| Scope and evidence validation | `backend/app/evidence` |
+| Controlled answer composition | `backend/app/generation` |
+| Runtime orchestration | `backend/app/services/engine.py` |
+| REST API and OpenAPI schema | `backend/app/api` |
+| Offline document pipeline | `backend/ingestion` |
+| React evidence interface | `frontend/src` |
+| Experiments and acceptance notebooks | `notebooks` |
 
-## Quickstart
+Detailed diagrams and code mappings are available in
+[`docs/architecture/README.md`](docs/architecture/README.md).
 
-Prereqs: Python 3.12+, Node.js 22+
+## Technology stack
+
+**AI and retrieval:** Google Gemini API, Gemini Embeddings, BM25, RRF, deterministic
+evidence contracts and an optional bounded LLM judge.
+
+**Document processing:** Docling, PyMuPDF, Markdown artifacts and Jupyter notebooks.
+
+**Application:** Python, FastAPI, Pydantic, React, TypeScript and Vite.
+
+**Quality and delivery:** Pytest, Ruff, Docker multi-stage builds, GitHub Actions and Render.
+
+## Evaluation results
+
+The current acceptance suite contains positive, partial, wrong-scope, wrong-entity,
+wrong-period and deliberately ambiguous cases.
+
+| Metric | Result |
+|---|---:|
+| Backend tests | 48 passed |
+| Golden evaluation cases | 14 / 14 |
+| Mapping accuracy | 100% |
+| Required-field recall | 100% |
+| Citation precision | 100% |
+| False-completeness rate | 0% |
+
+These values describe the committed demonstration corpus and evaluation set; they are not
+presented as general production benchmarks. See [`docs/EVALUATION.md`](docs/EVALUATION.md)
+for metric definitions and individual cases.
+
+## Run locally
+
+Requirements: Python 3.12+, Node.js 22+ and, for online model calls, a Gemini API key.
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate   # or .venv\Scripts\activate on Windows PowerShell
-python -m pip install -e ".[dev]"
-cd frontend && npm install && cd ..
+source .venv/bin/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev,online-models]"
+cd frontend
+npm ci
+cd ..
 ```
 
-Start services (two terminals):
+Copy `.env.example` to `.env`, then configure the required model variables. Never commit the
+real `.env` file or an API key.
+
+Start the API and frontend in two terminals:
 
 ```bash
 make dev-api
 make dev-front
 ```
 
-Frontend: http://localhost:5173 — API docs: http://localhost:8000/docs
+- Application: http://localhost:5173
+- API documentation: http://localhost:8000/docs
+- Health check: http://localhost:8000/api/health
 
-## Usage
+Alternatively, use the same container path as the deployment:
 
-- API endpoints: [backend/app/api/routes.py](backend/app/api/routes.py)
-- Frontend: [frontend/src](frontend/src)
-- Eval harness: [backend/app/evals/run_evals.py](backend/app/evals/run_evals.py)
+```bash
+docker build -t prudential-evidence-lab .
+docker run --env-file .env -p 8000:8000 prudential-evidence-lab
+```
 
-The landing page exposes three tested workflows for each interaction mode. Selecting a
-scenario also selects its reviewed public QRT. After a response, the composer clears while
-the answer remains inspectable. A saved thread can be reopened and continued; its bounded
-context contains the validated profile, accepted facts, entity, period and missing fields,
-not a free-form conversation summary. Browser persistence is optional and no server-side
-user history is created.
-
-## Demonstrated case: public QRT 2025
-
-The primary demonstration uses Groupe Foyer's official 2025 public QRT. Three reviewed
-cells from table `S.23.01.22` form the evidence contract:
-
-- `R0660/C0010`: eligible own funds covering the total group SCR;
-- `R0680/C0010`: total group SCR;
-- `R0690/C0010`: coverage ratio.
-
-The PDFs were processed offline with Docling and a PyMuPDF fallback, then reviewed and
-promoted as Markdown/chunk artifacts. The main Groupe Foyer QRT has a deployed Gemini
-embedding cache for 87 chunks; other scopes visibly use the hashing fallback. This is a
-reviewed offline ingestion path, not a claim of universally reliable PDF automation.
-
-## Controls & Tests
-
-Common targets:
+## Validation commands
 
 ```bash
 make lint
@@ -114,25 +174,32 @@ make eval
 make build-front
 ```
 
-The evaluation suite includes intentionally non-answerable queries and measures mapping accuracy, gating correctness, citation precision, and false-completeness. See [docs/EVALUATION.md](docs/EVALUATION.md).
+The notebooks document environment setup, corpus provenance, PDF/table extraction,
+multimodal descriptions, embeddings, hybrid retrieval, evidence gating, chunk-size limits,
+runtime orchestration and the complete acceptance matrix.
 
-## Deployment (Render)
+## Honest boundaries
 
-1. Push to GitHub
-2. Create a Blueprint from `render.yaml` on Render
-3. Render builds the frontend in the first Docker stage and exposes FastAPI
-4. Health check: `/api/health`
+- The included corpus is small and deliberately curated for a technical demonstration.
+- PDF extraction is an offline, reviewed pipeline—not universal automated PDF ingestion.
+- Gemini dense embeddings are the intended dense retrieval path. If they are unavailable,
+  the runtime explicitly reports `gemini+hashing-fallback`; hashing is only a deterministic
+  resilience baseline and is never presented as a semantic embedding model.
+- Explicit reference resolution currently supports numbered section references only.
+- Browser conversation history is local and is not a regulated system of record.
+- There are no user accounts, background ingestion workers or distributed orchestration.
+- At larger scale, local retrieval should move to a vector store such as pgvector, Qdrant or
+  FAISS, with asynchronous ingestion, document-version governance and observability.
 
-Note: Render free tier may sleep; persistent storage is not guaranteed. Bake durable documents into images for production.
+## Deployment
 
-## Limitations
+`render.yaml` and the multi-stage `Dockerfile` provide the current Render deployment path.
+GitHub Actions runs quality checks and the container build before release. Operational details,
+environment variables and offline-ingestion steps are documented in
+[`docs/OPERATIONS.md`](docs/OPERATIONS.md).
 
-- Gemini dense coverage is limited to the 87-chunk principal QRT; other scopes use a deterministic hashing fallback
-- Retrieval expands through a fixed `k=1 → 3 → 5` budget; it is not a distributed agent orchestration system
-- Cross-reference resolution supports explicit numbered sections only and follows at most three targets per batch
-- Entity and period are enforced when supplied as structured query constraints; the UI sends
-  them only for a single-document scope, where they are unambiguous
-- Corpus intentionally small; for >50k chunks use Qdrant/pgvector/FAISS
-- No user accounts, ingestion workers, or production orchestration in the MVP
-- Conversation history is browser-local and is not suitable for shared or regulated records
-- Complex PDF table extraction is an offline ingestion pipeline (`backend/ingestion/README.md`)
+## Data and provenance
+
+Only public Groupe Foyer documents and reviewed derived artifacts are included. Source URLs,
+page counts and checksums are listed in
+[`docs/PUBLIC_SOURCES_2025.md`](docs/PUBLIC_SOURCES_2025.md).
