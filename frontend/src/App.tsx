@@ -20,6 +20,12 @@ const MODE_COPY: Record<Mode, { label: string; short: string; title: string; int
   },
 };
 
+const MODE_SIGNATURE: Record<Mode, { marker: string; promise: string }> = {
+  quick: { marker: "Décision express", promise: "Un chiffre. Une source. Aucun détour." },
+  deep: { marker: "Lecture contrôlée", promise: "Chaque champ attendu doit trouver sa preuve." },
+  summary: { marker: "Note de synthèse", promise: "Une restitution claire, bornée par les faits." },
+};
+
 const EXAMPLES: Record<Mode, Array<{ label: string; question: string; documentId: string; expected: string }>> = {
   quick: [
     { label: "Groupe Foyer", question: "Quel est le ratio de couverture SCR du Groupe Foyer en 2025 ?", documentId: "foyer_group_qrt_2025", expected: "3 champs QRT vérifiés" },
@@ -38,7 +44,7 @@ const EXAMPLES: Record<Mode, Array<{ label: string; question: string; documentId
   ],
 };
 
-function Icon({ name }: { name: "library" | "shield" | "spark" | "search" | "clock" | "external" | "home" | "plus" }) {
+function Icon({ name }: { name: "library" | "shield" | "spark" | "search" | "clock" | "external" | "home" | "plus" | "close" }) {
   const paths = {
     library: <path d="M4 5.5h16M6.5 3v16m5-16v16m5-16v16M4 19h16" />,
     shield: <path d="M12 3 4.8 6v5.2c0 4.5 3.1 7.4 7.2 9.8 4.1-2.4 7.2-5.3 7.2-9.8V6L12 3Zm-3 9 2 2 4-5" />,
@@ -48,6 +54,7 @@ function Icon({ name }: { name: "library" | "shield" | "spark" | "search" | "clo
     external: <path d="M14 4h6v6m0-6-9 9M10 6H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5" />,
     home: <path d="m3 11 9-8 9 8M5 10v10h14V10M9 20v-6h6v6" />,
     plus: <path d="M12 5v14M5 12h14" />,
+    close: <path d="m6 6 12 12M18 6 6 18" />,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
@@ -99,6 +106,9 @@ export default function App() {
   const [persistent, setPersistent] = useState(true);
   const [sessions, setSessions] = useState<SessionEntry[]>(loadSessions);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(() =>
+    typeof window === "undefined" || !window.matchMedia("(max-width: 800px)").matches
+  );
 
   useEffect(() => {
     getDocuments().then((list) => {
@@ -113,6 +123,14 @@ export default function App() {
     target.setItem("pel-conversations", JSON.stringify(sessions.slice(0, 12)));
     other.removeItem("pel-conversations");
   }, [sessions, persistent]);
+
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setLibraryOpen(false);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
 
   const activeSession = sessions.find((item) => item.id === activeSessionId) ?? null;
   const activeEvidence = useMemo(
@@ -173,13 +191,14 @@ export default function App() {
 
   return <div className={`app-shell mode-${mode}`}>
     <header className="topbar">
-      <button className="brand" onClick={goHome} aria-label="Retour à l’accueil"><span className="brand-mark"><Icon name="shield" /></span><span><small>AI ENGINEERING DEMONSTRATOR</small><strong>Prudential Evidence Lab</strong></span></button>
+      <div className="brand-zone"><button className="library-toggle" onClick={() => setLibraryOpen((open) => !open)} aria-expanded={libraryOpen} aria-controls="document-library" aria-label={libraryOpen ? "Fermer la bibliothèque" : "Ouvrir la bibliothèque"}><Icon name="library" /><span>Corpus</span></button><button className="brand" onClick={goHome} aria-label="Retour à l’accueil"><span className="brand-mark"><Icon name="shield" /></span><span><small>AI ENGINEERING DEMONSTRATOR</small><strong>Prudential Evidence Lab</strong></span></button></div>
       <div className="topbar-actions"><span className="live-pill"><i />Corpus public contrôlé</span><button className="new-analysis" onClick={goHome}><Icon name="plus" /> Nouvelle analyse</button></div>
     </header>
 
-    <main className="workspace">
-      <aside className="sidebar library-panel">
-        <div className="panel-heading"><span><Icon name="library" /> Bibliothèque</span><b>{selectedDocuments.length}/{documents.length}</b></div>
+    <main className={`workspace ${libraryOpen ? "library-open" : "library-closed"}`}>
+      {libraryOpen && <button className="library-backdrop" onClick={() => setLibraryOpen(false)} aria-label="Fermer la bibliothèque" />}
+      <aside id="document-library" className="sidebar library-panel" aria-hidden={!libraryOpen}>
+        <div className="panel-heading"><span><Icon name="library" /> Bibliothèque</span><div className="library-heading-actions"><b>{selectedDocuments.length}/{documents.length}</b><button className="library-close" onClick={() => setLibraryOpen(false)} aria-label="Fermer la bibliothèque"><Icon name="close" /></button></div></div>
         <p>Six PDF publics : trois rapports narratifs et trois QRT tabulaires.</p>
         <div className="document-list">{documents.map((doc, index) => <label key={doc.id} className={`document-card document-tone-${index % 4} ${selectedDocuments.includes(doc.id) ? "selected" : ""}`}>
           <input type="checkbox" checked={selectedDocuments.includes(doc.id)} onChange={() => setSelectedDocuments((current) => current.includes(doc.id) ? current.filter((id) => id !== doc.id) : [...current, doc.id])} />
@@ -220,7 +239,7 @@ export default function App() {
 function Welcome({ mode, onExample }: { mode: Mode; onExample: (example: (typeof EXAMPLES)[Mode][number]) => void }) {
   const copy = MODE_COPY[mode];
   return <section className="welcome-card">
-    <div className="hero-grid"><div className="hero-copy"><div className="welcome-kicker"><span><Icon name="spark" /></span>PARCOURS TESTÉ · {copy.label.toUpperCase()}</div><h2>{copy.title}</h2><p>{copy.intro}</p><div className="hero-metrics"><span><b>6</b><small>PDF publics</small></span><span><b>3</b><small>canaux de recherche</small></span><span><b>0%</b><small>fausse complétude</small></span></div></div>
+    <div className="hero-grid"><div className="hero-copy"><div className="welcome-kicker"><span><Icon name="spark" /></span>PARCOURS TESTÉ · {copy.label.toUpperCase()}</div><div className="hero-message"><span className="message-marker">{MODE_SIGNATURE[mode].marker}</span><h2>{copy.title}</h2><p>{copy.intro}</p><div className="message-promise"><i />{MODE_SIGNATURE[mode].promise}</div></div><div className="hero-metrics"><span><b>6</b><small>PDF publics</small></span><span><b>3</b><small>canaux de recherche</small></span><span><b>0%</b><small>fausse complétude</small></span></div></div>
       <div className="evidence-visual" aria-hidden="true"><div className="visual-glow" /><div className="document-stack"><i /><i /><i /><strong>QRT<br />2025</strong></div><div className="orbit orbit-one"><span>BM25</span></div><div className="orbit orbit-two"><span>Dense</span></div><div className="orbit orbit-three"><span>Gate ✓</span></div><div className="visual-caption"><b>Evidence contract</b><small>retrieved · checked · cited</small></div></div>
     </div>
     <div className="process-strip"><span><b>01</b><i>Mapper</i><small>Intention métier</small></span><span><b>02</b><i>Retrieve</i><small>Recherche multi-preuves</small></span><span><b>03</b><i>Verify</i><small>Gate de complétude</small></span></div>
