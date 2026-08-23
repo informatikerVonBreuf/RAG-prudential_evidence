@@ -181,7 +181,7 @@ export default function App() {
       <aside className="sidebar library-panel">
         <div className="panel-heading"><span><Icon name="library" /> Bibliothèque</span><b>{selectedDocuments.length}/{documents.length}</b></div>
         <p>Six PDF publics : trois rapports narratifs et trois QRT tabulaires.</p>
-        <div className="document-list">{documents.map((doc) => <label key={doc.id} className={`document-card ${selectedDocuments.includes(doc.id) ? "selected" : ""}`}>
+        <div className="document-list">{documents.map((doc, index) => <label key={doc.id} className={`document-card document-tone-${index % 4} ${selectedDocuments.includes(doc.id) ? "selected" : ""}`}>
           <input type="checkbox" checked={selectedDocuments.includes(doc.id)} onChange={() => setSelectedDocuments((current) => current.includes(doc.id) ? current.filter((id) => id !== doc.id) : [...current, doc.id])} />
           <span className="check" /><span><small>{doc.folder}</small><strong>{doc.title}</strong><em>{doc.year} · {doc.document_type}</em></span>
         </label>)}</div>
@@ -192,6 +192,10 @@ export default function App() {
 
       <section className="conversation-panel">
         <nav className="mode-tabs" aria-label="Mode d’analyse">{(Object.keys(MODE_COPY) as Mode[]).map((item) => <button key={item} className={mode === item ? "active" : ""} onClick={() => { setMode(item); if (!activeSessionId) setAnswer(null); }}><strong>{MODE_COPY[item].label}</strong><small>{MODE_COPY[item].short}</small></button>)}</nav>
+        <details className="mobile-scope">
+          <summary><Icon name="library" /><span>Corpus sélectionné</span><b>{selectedDocuments.length}/{documents.length}</b></summary>
+          <div>{documents.map((doc) => <label key={doc.id}><input type="checkbox" checked={selectedDocuments.includes(doc.id)} onChange={() => setSelectedDocuments((current) => current.includes(doc.id) ? current.filter((id) => id !== doc.id) : [...current, doc.id])} /><span>{doc.title}</span></label>)}</div>
+        </details>
         <div className="conversation-scroll">
           {!answer && !loading && <Welcome mode={mode} onExample={useExample} />}
           {loading && <div className="loading-card"><span className="loader" /><div><strong>Construction du contrat de preuves</strong><small>Mapping · requêtes par champ · fusion hybride · validation</small></div></div>}
@@ -215,10 +219,13 @@ export default function App() {
 
 function Welcome({ mode, onExample }: { mode: Mode; onExample: (example: (typeof EXAMPLES)[Mode][number]) => void }) {
   const copy = MODE_COPY[mode];
-  return <section className="welcome-card"><div className="welcome-kicker"><span><Icon name="spark" /></span>PARCOURS TESTÉ · {copy.label.toUpperCase()}</div><h2>{copy.title}</h2><p>{copy.intro}</p>
-    <div className="process-strip"><span><b>01</b> Intention métier</span><span><b>02</b> Recherche multi-preuves</span><span><b>03</b> Gate de complétude</span></div>
+  return <section className="welcome-card">
+    <div className="hero-grid"><div className="hero-copy"><div className="welcome-kicker"><span><Icon name="spark" /></span>PARCOURS TESTÉ · {copy.label.toUpperCase()}</div><h2>{copy.title}</h2><p>{copy.intro}</p><div className="hero-metrics"><span><b>6</b><small>PDF publics</small></span><span><b>3</b><small>canaux de recherche</small></span><span><b>0%</b><small>fausse complétude</small></span></div></div>
+      <div className="evidence-visual" aria-hidden="true"><div className="visual-glow" /><div className="document-stack"><i /><i /><i /><strong>QRT<br />2025</strong></div><div className="orbit orbit-one"><span>BM25</span></div><div className="orbit orbit-two"><span>Dense</span></div><div className="orbit orbit-three"><span>Gate ✓</span></div><div className="visual-caption"><b>Evidence contract</b><small>retrieved · checked · cited</small></div></div>
+    </div>
+    <div className="process-strip"><span><b>01</b><i>Mapper</i><small>Intention métier</small></span><span><b>02</b><i>Retrieve</i><small>Recherche multi-preuves</small></span><span><b>03</b><i>Verify</i><small>Gate de complétude</small></span></div>
     <div className="examples-heading"><strong>Scénarios prêts à démontrer</strong><small>Chaque carte sélectionne automatiquement le bon QRT public.</small></div>
-    <div className="suggestions">{EXAMPLES[mode].map((example) => <button key={example.question} onClick={() => onExample(example)}><span>{example.label}</span><strong>{example.question}</strong><small>{example.expected} →</small></button>)}</div>
+    <div className="suggestions">{EXAMPLES[mode].map((example, index) => <button className={`example-tone-${index}`} key={example.question} onClick={() => onExample(example)}><span>{example.label}</span><strong>{example.question}</strong><small>{example.expected} →</small><i aria-hidden="true">0{index + 1}</i></button>)}</div>
   </section>;
 }
 
