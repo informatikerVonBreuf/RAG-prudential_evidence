@@ -37,6 +37,7 @@ in the accompanying engineering brief:
 - Explicit query reformulation for every required evidence field
 - Hybrid retrieval using BM25, Gemini dense embeddings and Reciprocal Rank Fusion (RRF)
 - Controlled widening through `k=1 → 3 → 5`
+- Reproducible flat vs contextual vs hierarchical parent/child chunking benchmark
 - Resolution of explicit `see section` / `voir section` references, with at most three
   followed references per batch
 - Stop reasons exposed as `contract_complete`, `conflict` or `budget_exhausted`
@@ -119,7 +120,7 @@ wrong-period and deliberately ambiguous cases.
 
 | Metric | Result |
 |---|---:|
-| Backend tests | 48 passed |
+| Backend tests | 52 passed |
 | Golden evaluation cases | 14 / 14 |
 | Mapping accuracy | 100% |
 | Required-field recall | 100% |
@@ -176,7 +177,13 @@ make build-front
 
 The notebooks document environment setup, corpus provenance, PDF/table extraction,
 multimodal descriptions, embeddings, hybrid retrieval, evidence gating, chunk-size limits,
-runtime orchestration and the complete acceptance matrix.
+runtime orchestration, hierarchical/contextual chunking and the complete acceptance matrix.
+
+The latest chunking experiment finds that parent/child routing improves MRR from 0.603 to
+0.693 and reduces mean candidates from 87 to 49 on the principal QRT, while Gemini-generated
+chunk context improves some natural questions but reduces aggregate Recall@5. It therefore
+remains an offline selective enrichment rather than the production default. See
+[`docs/HIERARCHICAL_CONTEXTUAL_CHUNKING.md`](docs/HIERARCHICAL_CONTEXTUAL_CHUNKING.md).
 
 ## Honest boundaries
 

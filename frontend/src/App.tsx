@@ -217,17 +217,17 @@ export default function App() {
         </details>
         <div className="conversation-scroll">
           {!answer && !loading && <Welcome mode={mode} onExample={useExample} />}
-          {loading && <div className="loading-card"><span className="loader" /><div><strong>Construction du contrat de preuves</strong><small>Mapping · requêtes par champ · fusion hybride · validation</small></div></div>}
+          {loading && <div className="loading-card" role="status" aria-live="polite"><span className="loader" aria-hidden="true" /><div><strong>Analyse des preuves en cours</strong><small>Mapping · requêtes par champ · fusion hybride · validation</small></div></div>}
           {answer && !loading && <>
             <div className="thread-bar"><button onClick={goHome}><Icon name="home" /> Accueil</button><span>{activeSession?.turns.length ?? 1} échange{(activeSession?.turns.length ?? 1) > 1 ? "s" : ""} · mémoire factuelle active</span></div>
             {activeSession && activeSession.turns.length > 1 && <details className="thread-context"><summary>Contexte de la conversation ({activeSession.turns.length - 1} réponse antérieure)</summary>{activeSession.turns.slice(0, -1).map((turn) => <button key={turn.id} onClick={() => { setAnswer(turn.answer); setActiveEvidenceId(turn.answer.evidence.find((item) => item.state === "ACCEPTED")?.id ?? null); }}><strong>{turn.question}</strong><small>{turn.answer.status} · {turn.answer.profile_label}</small></button>)}</details>}
             <AnswerView answer={answer} onEvidence={setActiveEvidenceId} />
           </>}
-          {error && <div className="error-banner">{error}</div>}
+          {error && <div className="error-banner" role="alert"><strong>Analyse impossible.</strong> {error}</div>}
         </div>
         <form className="question-composer" onSubmit={submit}>
           <div className="scope-summary"><span>{selectedDocuments.length} document(s)</span><span>{activeSession ? "Continuer cette analyse" : MODE_COPY[mode].label}</span></div>
-          <div className="composer-row"><textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={activeSession ? "Posez une question de suivi…" : "Posez une question sur le corpus sélectionné…"} rows={2} /><button disabled={loading || question.trim().length < 3 || !selectedDocuments.length}><Icon name="search" /><span>Analyser</span></button></div>
+          <div className="composer-row"><textarea aria-label="Question à analyser" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={activeSession ? "Posez une question de suivi…" : "Posez une question sur le corpus sélectionné…"} rows={2} /><button aria-label="Analyser la question" disabled={loading || question.trim().length < 3 || !selectedDocuments.length}><Icon name="search" /><span>Analyser</span></button></div>
         </form>
       </section>
 
@@ -239,12 +239,12 @@ export default function App() {
 function Welcome({ mode, onExample }: { mode: Mode; onExample: (example: (typeof EXAMPLES)[Mode][number]) => void }) {
   const copy = MODE_COPY[mode];
   return <section className="welcome-card">
-    <div className="hero-grid"><div className="hero-copy"><div className="welcome-kicker"><span><Icon name="spark" /></span>PARCOURS TESTÉ · {copy.label.toUpperCase()}</div><div className="hero-message"><span className="message-marker">{MODE_SIGNATURE[mode].marker}</span><h2>{copy.title}</h2><p>{copy.intro}</p><div className="message-promise"><i />{MODE_SIGNATURE[mode].promise}</div></div><div className="hero-metrics"><span><b>6</b><small>PDF publics</small></span><span><b>3</b><small>canaux de recherche</small></span><span><b>0%</b><small>fausse complétude</small></span></div></div>
-      <div className="evidence-visual" aria-hidden="true"><div className="visual-glow" /><div className="document-stack"><i /><i /><i /><strong>QRT<br />2025</strong></div><div className="orbit orbit-one"><span>BM25</span></div><div className="orbit orbit-two"><span>Dense</span></div><div className="orbit orbit-three"><span>Gate ✓</span></div><div className="visual-caption"><b>Evidence contract</b><small>retrieved · checked · cited</small></div></div>
+    <div className="hero-grid"><div className="hero-copy"><div className="welcome-kicker"><span><Icon name="spark" /></span>PARCOURS TESTÉ · {copy.label.toUpperCase()}</div><div className="hero-message"><span className="message-marker">{MODE_SIGNATURE[mode].marker}</span><h2>{copy.title}</h2><p>{copy.intro}</p><div className="message-promise"><i />{MODE_SIGNATURE[mode].promise}</div></div><div className="hero-metrics"><span><b>6</b><small>PDF publics</small></span><span><b>3</b><small>canaux de recherche</small></span><span><b>4</b><small>statuts explicites</small></span></div></div>
+      <div className="evidence-visual" aria-label="Chaîne de traitement documentaire"><div className="architecture-card"><div className="architecture-heading"><span>Chaîne de preuve</span><b>Auditée</b></div><ol><li><i>01</i><span><strong>Question métier</strong><small>Intention, entité, période</small></span></li><li><i>02</i><span><strong>Recherche hybride</strong><small>BM25 + dense + RRF</small></span></li><li><i>03</i><span><strong>Contrat de preuves</strong><small>Couverture et provenance</small></span></li></ol><div className="architecture-result"><Icon name="shield" /><span><strong>Réponse contrôlée</strong><small>Complète, partielle, absente ou en conflit</small></span></div></div></div>
     </div>
     <div className="process-strip"><span><b>01</b><i>Mapper</i><small>Intention métier</small></span><span><b>02</b><i>Retrieve</i><small>Recherche multi-preuves</small></span><span><b>03</b><i>Verify</i><small>Gate de complétude</small></span></div>
     <div className="examples-heading"><strong>Scénarios prêts à démontrer</strong><small>Chaque carte sélectionne automatiquement le bon QRT public.</small></div>
-    <div className="suggestions">{EXAMPLES[mode].map((example, index) => <button className={`example-tone-${index}`} key={example.question} onClick={() => onExample(example)}><span>{example.label}</span><strong>{example.question}</strong><small>{example.expected} →</small><i aria-hidden="true">0{index + 1}</i></button>)}</div>
+    <div className="suggestions">{EXAMPLES[mode].map((example, index) => <button className={`example-tone-${index}`} key={example.question} onClick={() => onExample(example)}><span>{example.label}</span><strong>{example.question}</strong><small>{example.expected} <b aria-hidden="true">→</b></small><i aria-hidden="true">0{index + 1}</i></button>)}</div>
   </section>;
 }
 
