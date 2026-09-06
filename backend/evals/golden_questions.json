@@ -120,9 +120,9 @@
     "question": "Compare Foyer Assurances SCR with Global Health SCR in 2025",
     "mode": "deep",
     "document_ids": ["foyer_assurances_qrt_2025", "foyer_global_health_qrt_2025"],
-    "expected_profile": "open_question",
-    "expected_status": "NOT_FOUND",
-    "expected_fields": []
+    "expected_profile": "prudential_sql_comparison",
+    "expected_status": "COMPLETE",
+    "expected_fields": ["group_scr"]
   },
   {
     "id": "multi-period-ambiguous-abstention",
@@ -132,5 +132,122 @@
     "expected_profile": "open_question",
     "expected_status": "NOT_FOUND",
     "expected_fields": []
+  },
+  {
+    "id": "group-quick-complete",
+    "question": "Quel est le ratio de couverture SCR du Groupe Foyer en 2025 ?",
+    "mode": "quick", "document_ids": ["foyer_group_qrt_2025"],
+    "constraints": {"entity": "Groupe Foyer", "period": "2025"},
+    "expected_profile": "prudential_coverage", "expected_status": "COMPLETE",
+    "expected_fields": ["eligible_own_funds_scr", "group_scr", "scr_coverage_ratio"]
+  },
+  {
+    "id": "group-summary-complete",
+    "question": "Présente une synthèse de la couverture prudentielle du Groupe Foyer en 2025.",
+    "mode": "summary", "document_ids": ["foyer_group_qrt_2025"],
+    "constraints": {"entity": "Groupe Foyer", "period": "2025"},
+    "expected_profile": "prudential_coverage", "expected_status": "COMPLETE",
+    "expected_fields": ["eligible_own_funds_scr", "group_scr", "scr_coverage_ratio"]
+  },
+  {
+    "id": "group-wrong-entity",
+    "question": "Couverture prudentielle du Groupe Foyer en 2025",
+    "mode": "deep", "document_ids": ["foyer_group_qrt_2025"],
+    "constraints": {"entity": "Foyer Assurances S.A.", "period": "2025"},
+    "profile_id": "prudential_coverage", "expected_profile": "prudential_coverage",
+    "expected_status": "NOT_FOUND", "expected_fields": []
+  },
+  {
+    "id": "assurances-french-complete",
+    "question": "Quelle est la couverture prudentielle de Foyer Assurances en 2025 ?",
+    "mode": "deep", "document_ids": ["foyer_assurances_qrt_2025"],
+    "constraints": {"entity": "Foyer Assurances S.A.", "period": "2025"},
+    "expected_profile": "entity_prudential_coverage", "expected_status": "COMPLETE",
+    "expected_fields": ["eligible_own_funds_scr", "entity_scr", "scr_coverage_ratio"]
+  },
+  {
+    "id": "global-health-prudential-complete",
+    "question": "Analyse la couverture prudentielle de Foyer Global Health en 2025.",
+    "mode": "deep", "document_ids": ["foyer_global_health_qrt_2025"],
+    "constraints": {"entity": "Foyer Global Health S.A.", "period": "2025"},
+    "expected_profile": "entity_prudential_coverage", "expected_status": "COMPLETE",
+    "expected_fields": ["eligible_own_funds_scr", "entity_scr", "scr_coverage_ratio"]
+  },
+  {
+    "id": "global-health-wrong-period",
+    "question": "SCR coverage for Foyer Global Health in 2023",
+    "mode": "deep", "document_ids": ["foyer_global_health_qrt_2025"],
+    "constraints": {"entity": "Foyer Global Health S.A.", "period": "2023"},
+    "profile_id": "entity_prudential_coverage", "expected_profile": "entity_prudential_coverage",
+    "expected_status": "NOT_FOUND", "expected_fields": []
+  },
+  {
+    "id": "global-health-wrong-entity",
+    "question": "SCR coverage for Foyer Global Health in 2025",
+    "mode": "deep", "document_ids": ["foyer_global_health_qrt_2025"],
+    "constraints": {"entity": "Groupe Foyer", "period": "2025"},
+    "profile_id": "entity_prudential_coverage", "expected_profile": "entity_prudential_coverage",
+    "expected_status": "NOT_FOUND", "expected_fields": []
+  },
+  {
+    "id": "sql-compare-ratios",
+    "question": "Compare les ratios de couverture SCR des trois entités en 2025",
+    "mode": "deep", "document_ids": ["foyer_group_qrt_2025", "foyer_assurances_qrt_2025", "foyer_global_health_qrt_2025"],
+    "constraints": {"period": "2025"}, "expected_profile": "prudential_sql_comparison",
+    "expected_status": "COMPLETE", "expected_fields": ["scr_coverage_ratio"]
+  },
+  {
+    "id": "sql-highest-ratio",
+    "question": "Quelle entité a le ratio de couverture SCR le plus élevé ?",
+    "mode": "quick", "document_ids": ["foyer_group_qrt_2025", "foyer_assurances_qrt_2025", "foyer_global_health_qrt_2025"],
+    "expected_profile": "prudential_sql_comparison", "expected_status": "COMPLETE",
+    "expected_fields": ["scr_coverage_ratio"]
+  },
+  {
+    "id": "sql-average-ratio",
+    "question": "Quelle est la moyenne des ratios de couverture SCR ?",
+    "mode": "deep", "document_ids": ["foyer_group_qrt_2025", "foyer_assurances_qrt_2025", "foyer_global_health_qrt_2025"],
+    "expected_profile": "prudential_sql_comparison", "expected_status": "COMPLETE",
+    "expected_fields": ["scr_coverage_ratio"]
+  },
+  {
+    "id": "sql-wrong-period",
+    "question": "Compare les ratios de couverture SCR en 2022",
+    "mode": "deep", "document_ids": ["foyer_group_qrt_2025", "foyer_assurances_qrt_2025"],
+    "constraints": {"period": "2022"}, "expected_profile": "prudential_sql_comparison",
+    "expected_status": "NOT_FOUND", "expected_fields": []
+  },
+  {
+    "id": "position-quick-complete",
+    "question": "Quels chiffres décrivent la position du Groupe ?",
+    "mode": "quick", "document_ids": ["foyer_financial_information_2025"],
+    "profile_id": "public_position", "expected_profile": "public_position",
+    "expected_status": "COMPLETE", "expected_fields": ["group_equity", "non_life_market_share", "business_areas"]
+  },
+  {
+    "id": "customers-summary-complete",
+    "question": "Résume les indicateurs clients et opérationnels publiés.",
+    "mode": "summary", "document_ids": ["foyer_annual_report_2025"],
+    "profile_id": "customer_operations", "expected_profile": "customer_operations",
+    "expected_status": "COMPLETE", "expected_fields": ["insured_households", "myfoyer_satisfaction", "claims_satisfaction"]
+  },
+  {
+    "id": "health-english-complete",
+    "question": "What are the published Global Health business indicators?",
+    "mode": "deep", "document_ids": ["foyer_annual_report_2025"],
+    "profile_id": "international_health", "expected_profile": "international_health",
+    "expected_status": "COMPLETE", "expected_fields": ["active_countries", "earned_premiums", "employee_count"]
+  },
+  {
+    "id": "weather-unanswerable",
+    "question": "Quel temps faisait-il au Luxembourg à la date de publication ?",
+    "mode": "deep", "document_ids": ["foyer_sfcr_2025"],
+    "expected_profile": "open_question", "expected_status": "NOT_FOUND", "expected_fields": []
+  },
+  {
+    "id": "policy-number-unanswerable",
+    "question": "Quel est le numéro de contrat d'un client choisi au hasard ?",
+    "mode": "quick", "document_ids": ["foyer_sfcr_2025"],
+    "expected_profile": "open_question", "expected_status": "NOT_FOUND", "expected_fields": []
   }
 ]

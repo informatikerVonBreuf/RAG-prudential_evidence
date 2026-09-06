@@ -106,7 +106,7 @@ This executes all cells without saving their outputs. To refresh and persist eve
 python backend/tools/validate_notebooks.py --save-outputs
 ```
 
-## How to interpret the twelve notebooks
+## How to interpret the thirteen notebooks
 
 | Notebook | Input | Main procedure | Output to inspect | What a pass really means |
 | --- | --- | --- | --- | --- |
@@ -122,5 +122,6 @@ python backend/tools/validate_notebooks.py --save-outputs
 | 09 | Real QRT runtime requests plus controlled reference chunks | Bounded top-k recovery, contract stop and explicit reference following | Strategy, provider, k-history, stop reason and reference traces | Runtime orchestration is observable; reference resolution remains explicit and same-document only |
 | 10 | Real QRT requests plus minimal controlled rare-branch fixtures | Requirement-to-test acceptance matrix | Eleven checks with evidence level, observed value and pass state | The scoped demo promises are executable; controlled fixtures are not claims about public-source events |
 | 11 | 87 reviewed Groupe Foyer QRT chunks and six bilingual retrieval cases | Flat, structural-context, Gemini-context and parent/child comparison | Per-query ranks, Recall@k, MRR, candidate count and cached latency | Hierarchical routing is promising on one QRT; contextual enrichment is not yet justified as a default |
+| 12 | Promoted QRT facts plus controlled scan/cell fixtures | Distinct mode budgets, parameterized SQL comparison, promotion checks and OCR routing | SQL rows and provenance, safety trace, lifecycle decisions and scan profile | The analytical path is exhaustive for the selected promoted facts; OCR quality itself remains unproven |
 
 The stored reference run currently shows 11/11 expected end-to-end outcomes, citation precision 1.0, required-field recall 1.0 and false-completeness rate 0.0. These results are coherent for the curated demo. The most important limitation is coverage: more documents, paraphrases, OCR failures, conflicting periods and adversarial questions are required before claiming robustness at scale.

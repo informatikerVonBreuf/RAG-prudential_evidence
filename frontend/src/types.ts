@@ -107,13 +107,27 @@ export interface MappingTrace {
 }
 
 export interface RetrievalRunTrace {
-  strategy: "sequential_top1" | "batch_multi_field";
+  strategy: "sequential_top1" | "batch_multi_field" | "sql_analytics";
   dense_provider: string;
   rounds: number;
   k_history: number[];
   stop_reason: "contract_complete" | "conflict" | "budget_exhausted";
   resolved_references: string[];
   unresolved_references: string[];
+}
+
+export interface AnalyticalTrace {
+  route: "rag" | "sql" | "sql_plus_rag";
+  intent?: string | null;
+  sql?: string | null;
+  parameters: string[];
+  row_count: number;
+  safety_controls: string[];
+}
+
+export interface NarrativeContext {
+  excerpt: string;
+  source: SourceLocator;
 }
 
 export interface AnswerPayload {
@@ -134,6 +148,8 @@ export interface AnswerPayload {
   model_calls: ModelCallTrace[];
   mapping_trace: MappingTrace;
   retrieval_run: RetrievalRunTrace;
+  analytical_trace: AnalyticalTrace;
+  narrative_context: NarrativeContext[];
 }
 
 export interface ConversationTurn {

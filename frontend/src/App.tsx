@@ -26,7 +26,9 @@ const MODE_SIGNATURE: Record<Mode, { marker: string; promise: string }> = {
   summary: { marker: "Note de synthèse", promise: "Une restitution claire, bornée par les faits." },
 };
 
-const EXAMPLES: Record<Mode, Array<{ label: string; question: string; documentId: string; expected: string }>> = {
+type Example = { label: string; question: string; documentId: string | string[]; expected: string };
+
+const EXAMPLES: Record<Mode, Example[]> = {
   quick: [
     { label: "Groupe Foyer", question: "Quel est le ratio de couverture SCR du Groupe Foyer en 2025 ?", documentId: "foyer_group_qrt_2025", expected: "3 champs QRT vérifiés" },
     { label: "Foyer Assurances", question: "Quel est le niveau de couverture SCR de Foyer Assurances en 2025 ?", documentId: "foyer_assurances_qrt_2025", expected: "Entité juridique détectée" },
@@ -35,7 +37,7 @@ const EXAMPLES: Record<Mode, Array<{ label: string; question: string; documentId
   deep: [
     { label: "Contrat Groupe", question: "Quels éléments publics caractérisent la couverture prudentielle du Groupe Foyer en 2025 ?", documentId: "foyer_group_qrt_2025", expected: "Own funds + SCR + ratio" },
     { label: "Contrat entité", question: "Quels fonds propres éligibles, quel SCR et quel ratio Foyer Assurances publie-t-elle pour 2025 ?", documentId: "foyer_assurances_qrt_2025", expected: "3 preuves indépendantes" },
-    { label: "Santé internationale", question: "Analyse la couverture prudentielle de Foyer Global Health en 2025.", documentId: "foyer_global_health_qrt_2025", expected: "Scope strict par entité" },
+    { label: "Comparaison SQL", question: "Compare les ratios de couverture SCR des trois entités en 2025.", documentId: ["foyer_group_qrt_2025", "foyer_assurances_qrt_2025", "foyer_global_health_qrt_2025"], expected: "3 valeurs promues, requête exhaustive" },
   ],
   summary: [
     { label: "Brief Groupe", question: "Présente une synthèse structurée de la couverture prudentielle du Groupe Foyer en 2025.", documentId: "foyer_group_qrt_2025", expected: "Synthèse sur preuves admises" },
@@ -142,8 +144,8 @@ export default function App() {
     setActiveSessionId(null); setAnswer(null); setQuestion(""); setActiveEvidenceId(null); setError(null);
   }
 
-  function useExample(example: (typeof EXAMPLES)[Mode][number]) {
-    setSelectedDocuments([example.documentId]);
+  function useExample(example: Example) {
+    setSelectedDocuments(Array.isArray(example.documentId) ? example.documentId : [example.documentId]);
     setQuestion(example.question);
     setAnswer(null);
     setActiveSessionId(null);
@@ -236,7 +238,7 @@ export default function App() {
   </div>;
 }
 
-function Welcome({ mode, onExample }: { mode: Mode; onExample: (example: (typeof EXAMPLES)[Mode][number]) => void }) {
+function Welcome({ mode, onExample }: { mode: Mode; onExample: (example: Example) => void }) {
   const copy = MODE_COPY[mode];
   return <section className="welcome-card">
     <div className="hero-grid"><div className="hero-copy"><div className="welcome-kicker"><span><Icon name="spark" /></span>PARCOURS TESTÉ · {copy.label.toUpperCase()}</div><div className="hero-message"><span className="message-marker">{MODE_SIGNATURE[mode].marker}</span><h2>{copy.title}</h2><p>{copy.intro}</p><div className="message-promise"><i />{MODE_SIGNATURE[mode].promise}</div></div><div className="hero-metrics"><span><b>6</b><small>PDF publics</small></span><span><b>3</b><small>canaux de recherche</small></span><span><b>4</b><small>statuts explicites</small></span></div></div>
@@ -252,8 +254,10 @@ function AnswerView({ answer, onEvidence }: { answer: AnswerPayload; onEvidence:
   return <article className="answer-card"><header className="answer-header"><div><small>PROFIL DE PREUVES</small><h2>{answer.profile_label}</h2></div><b className={`answer-status ${answer.status.toLowerCase()}`}>{answer.status}</b></header><p className="answer-summary">{answer.summary}</p>
     <div className="coverage-grid">{answer.coverage.map((item) => <button key={item.field_id} className={`coverage-item ${item.state.toLowerCase()}`} disabled={!item.evidence_ids.length} onClick={() => item.evidence_ids[0] && onEvidence(item.evidence_ids[0])}><i>{item.state === "COVERED" ? "✓" : item.state === "CONFLICT" ? "!" : "—"}</i><span><strong>{item.label}</strong><small>{item.state === "COVERED" ? "Preuve acceptée" : item.state === "CONFLICT" ? "À examiner" : "Introuvable"}</small></span></button>)}</div>
     {!!answer.claims.length && <section className="claims-block"><h3>Assertions vérifiables</h3>{answer.claims.map((claim, index) => <button key={claim.id} onClick={() => claim.evidence_ids[0] && onEvidence(claim.evidence_ids[0])}><b>{String(index + 1).padStart(2, "0")}</b><span>{claim.text}</span><small>{claim.evidence_ids.length} source</small></button>)}</section>}
+    {!!answer.narrative_context.length && <section className="claims-block"><h3>Contexte narratif associé</h3>{answer.narrative_context.map((context, index) => <a className="context-row" key={`${context.source.document_id}-${index}`} href={context.source.source_url} target="_blank" rel="noreferrer"><b>{String(index + 1).padStart(2, "0")}</b><span>{context.excerpt}</span><small>p. {context.source.page}</small></a>)}</section>}
     <details className="trace-details"><summary>Piste d’audit de la récupération</summary><div><strong>Mapping · {answer.mapping_trace.decision_source}</strong><span>{answer.mapping_trace.profile_id} · confiance {answer.mapping_trace.confidence.toFixed(2)}</span><small>Entité {answer.mapping_trace.entity ?? "non contrainte"} · période {answer.mapping_trace.period ?? "non contrainte"}</small></div><div><strong>Récupération · {answer.retrieval_run.strategy}</strong><span>{answer.retrieval_run.dense_provider} · k={answer.retrieval_run.k_history.join("→")}</span><small>{answer.retrieval_run.rounds} tour(s) · arrêt {answer.retrieval_run.stop_reason}</small></div>{answer.query_trace.map((trace) => <div key={trace.field_id}><strong>{trace.field_id}</strong><span>{trace.query}</span><small>{trace.candidate_count} candidats · {trace.consulted_document_ids.length} documents</small></div>)}</details>
     <details className="trace-details"><summary>Appels modèles</summary>{answer.model_calls.map((call, index) => <div key={`${call.purpose}-${index}`}><strong>{call.provider} · {call.status}</strong><span>{call.model ?? "non configuré"}</span><small>{call.purpose} · {call.attempts} tentative(s) · {call.latency_ms} ms — {call.detail}</small></div>)}</details>
+    {answer.analytical_trace.route !== "rag" && <details className="trace-details"><summary>Requête analytique SQL</summary><div><strong>{answer.analytical_trace.intent} · {answer.analytical_trace.row_count} ligne(s)</strong><span>{answer.analytical_trace.sql}</span><small>Contrôles : {answer.analytical_trace.safety_controls.join(" · ")}</small></div></details>}
     <footer className="answer-footer"><span>{answer.latency_ms} ms</span><span>Synthèse {answer.generation_provider}</span><span>Corpus {answer.corpus_version}</span><span>ID {answer.request_id.slice(0, 8)}</span></footer>
   </article>;
 }

@@ -18,6 +18,42 @@ ROW_FIELDS = {
 }
 
 
+def assess_cell_for_promotion(fact: dict[str, object]) -> dict[str, object]:
+    """Apply deterministic promotion checks; an LLM can never bypass them."""
+    checks: list[str] = []
+    failures: list[str] = []
+    row_code = str(fact.get("row_code", ""))
+    if row_code in ROW_FIELDS:
+        checks.append("allow_listed_row")
+    else:
+        failures.append("row_not_in_business_catalogue")
+    if str(fact.get("column_code", "")) == "C0010":
+        checks.append("expected_column")
+    else:
+        failures.append("unexpected_column")
+    if isinstance(fact.get("normalized_value"), (int, float)):
+        checks.append("numeric_value")
+    else:
+        failures.append("non_numeric_value")
+    provenance = fact.get("provenance")
+    if isinstance(provenance, dict) and provenance.get("page") and provenance.get("bbox"):
+        checks.append("page_and_bbox_provenance")
+    else:
+        failures.append("missing_provenance")
+    expected_type = ROW_FIELDS.get(row_code, (None, None, None))[2]
+    if expected_type and str(fact.get("value_type")) == (
+        "ratio" if expected_type == "percentage" else expected_type
+    ):
+        checks.append("expected_value_type")
+    elif expected_type:
+        failures.append("unexpected_value_type")
+    return {
+        "state": "PROMOTED" if not failures else ("CANDIDATE" if checks else "EXTRACTED"),
+        "checks": checks,
+        "failures": failures,
+    }
+
+
 def runtime_section_path(chunk: dict[str, object]) -> list[str]:
     """Guarantee a reviewable locator even for cover-page or unsectioned visuals."""
     section_path = chunk.get("section_path")
@@ -36,9 +72,7 @@ def compile_runtime_corpus(base_path: Path, processed_directory: Path, output_pa
     ]
     extracted_chunks = [
         json.loads(line)
-        for line in (processed_directory / "chunks.jsonl").read_text(
-            encoding="utf-8"
-        ).splitlines()
+        for line in (processed_directory / "chunks.jsonl").read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
     document_id = manifest["document_id"]
@@ -84,7 +118,8 @@ def compile_runtime_corpus(base_path: Path, processed_directory: Path, output_pa
             }
         )
     for fact in facts:
-        if fact["row_code"] not in ROW_FIELDS:
+        promotion = assess_cell_for_promotion(fact)
+        if promotion["state"] != "PROMOTED":
             continue
         field_id, label, value_type = ROW_FIELDS[fact["row_code"]]
         value = fact["normalized_value"]

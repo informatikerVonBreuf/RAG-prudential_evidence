@@ -5,10 +5,12 @@ import time
 import uuid
 from pathlib import Path
 
+from app.analytics.service import PrudentialAnalytics
 from app.domain.mapping import HybridQuestionMapper
 from app.domain.models import (
     AnswerPayload,
     AnswerStatus,
+    Mode,
     QueryTrace,
     QuestionRequest,
     RetrievalRunTrace,
@@ -35,6 +37,15 @@ def stop_reason_for_status(status: AnswerStatus) -> str:
     return "budget_exhausted"
 
 
+def retrieval_budget(mode: Mode) -> tuple[int, ...]:
+    """Give each product mode a real, inspectable retrieval budget."""
+    if mode == Mode.QUICK:
+        return (1, 3)
+    if mode == Mode.SUMMARY:
+        return (3, 5, 8)
+    return (1, 3, 5, 8)
+
+
 class EvidenceEngine:
     def __init__(self, artifact_store: ArtifactStore = store) -> None:
         self.store = artifact_store
@@ -42,9 +53,12 @@ class EvidenceEngine:
         self.composer = GroundedComposer()
         self.online_composer = OptionalGeminiComposer()
         self.mapper = HybridQuestionMapper()
+        self.analytics = PrudentialAnalytics(artifact_store)
         self._retrievers: dict[tuple[str, ...], HybridRetriever] = {}
 
     async def answer(self, request: QuestionRequest) -> AnswerPayload:
+        if self.analytics.can_handle(request.question):
+            return self.analytics.answer(request)
         started = time.perf_counter()
         mapped = self.mapper.map(
             request.question,
@@ -68,7 +82,7 @@ class EvidenceEngine:
             self._retrievers[scope_key] = retriever
 
         strategy = choose_retrieval_strategy(len(profile.fields))
-        k_budget = (1, 3, 5)
+        k_budget = retrieval_budget(request.mode)
         resolved_references: list[str] = []
         unresolved_references: list[str] = []
         candidate_batches = []
@@ -148,10 +162,7 @@ class EvidenceEngine:
 
     def _build_retriever(self, selected_chunks):
         index_directory = (
-            Path(__file__).parents[1]
-            / "data"
-            / "indexes"
-            / "foyer_group_qrt_2025_gemini"
+            Path(__file__).parents[1] / "data" / "indexes" / "foyer_group_qrt_2025_gemini"
         )
         try:
             primary = GeminiDenseIndex(selected_chunks, index_directory)

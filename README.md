@@ -104,8 +104,8 @@ Detailed diagrams and code mappings are available in
 
 ## Technology stack
 
-**AI and retrieval:** Google Gemini API, Gemini Embeddings, BM25, RRF, deterministic
-evidence contracts and an optional bounded LLM judge.
+**AI and retrieval:** Google Gemini API, Gemini Embeddings, BM25, RRF, parameterized
+SQLite analytics, deterministic evidence contracts and an optional bounded LLM judge.
 
 **Document processing:** Docling, PyMuPDF, Markdown artifacts and Jupyter notebooks.
 
@@ -120,8 +120,8 @@ wrong-period and deliberately ambiguous cases.
 
 | Metric | Result |
 |---|---:|
-| Backend tests | 52 passed |
-| Golden evaluation cases | 14 / 14 |
+| Backend tests | 59 passed |
+| Golden evaluation cases | 30 / 30 |
 | Mapping accuracy | 100% |
 | Required-field recall | 100% |
 | Citation precision | 100% |
@@ -178,6 +178,9 @@ make build-front
 The notebooks document environment setup, corpus provenance, PDF/table extraction,
 multimodal descriptions, embeddings, hybrid retrieval, evidence gating, chunk-size limits,
 runtime orchestration, hierarchical/contextual chunking and the complete acceptance matrix.
+Notebook 12 demonstrates distinct product-mode budgets, exhaustive SQL queries over promoted
+QRT facts, the table-evidence lifecycle and scan routing. See
+[`docs/NEXT_LEVEL_ARCHITECTURE.md`](docs/NEXT_LEVEL_ARCHITECTURE.md).
 
 The latest chunking experiment finds that parent/child routing improves MRR from 0.603 to
 0.693 and reduces mean candidates from 87 to 49 on the principal QRT, while Gemini-generated
@@ -195,6 +198,8 @@ remains an offline selective enrichment rather than the production default. See
 - Explicit reference resolution currently supports numbered section references only.
 - Browser conversation history is local and is not a regulated system of record.
 - There are no user accounts, background ingestion workers or distributed orchestration.
+- The OCR test validates scan routing, not production OCR accuracy on a representative corpus.
+- SQLite is an in-memory demonstrator over promoted facts, not the target analytical store at scale.
 - At larger scale, local retrieval should move to a vector store such as pgvector, Qdrant or
   FAISS, with asynchronous ingestion, document-version governance and observability.
 

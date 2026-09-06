@@ -37,7 +37,12 @@ def ingest_pdf(
 
     pages = extract_pages(path, output_directory / "page_images")
     sample_text = "\n".join(page.text for page in pages[:3])
-    profile = detect_document_profile(path, sample_text)
+    sampled_pages = pages[:3]
+    scan_ratio = (
+        sum(page.potential_scan for page in sampled_pages) / len(sampled_pages)
+        if sampled_pages else 1.0
+    )
+    profile = detect_document_profile(path, sample_text, scan_ratio)
 
     # Docling is the primary structural extractor. Its Markdown export is cached so
     # notebook runs and the deployed application never need to reconvert the PDF.

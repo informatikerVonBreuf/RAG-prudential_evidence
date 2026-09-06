@@ -158,13 +158,27 @@ class QueryTrace(BaseModel):
 
 
 class RetrievalRunTrace(BaseModel):
-    strategy: Literal["sequential_top1", "batch_multi_field"]
+    strategy: Literal["sequential_top1", "batch_multi_field", "sql_analytics"]
     dense_provider: str
     rounds: int
     k_history: list[int]
     stop_reason: Literal["contract_complete", "conflict", "budget_exhausted"]
     resolved_references: list[str] = Field(default_factory=list)
     unresolved_references: list[str] = Field(default_factory=list)
+
+
+class AnalyticalTrace(BaseModel):
+    route: Literal["rag", "sql", "sql_plus_rag"] = "rag"
+    intent: str | None = None
+    sql: str | None = None
+    parameters: list[str] = Field(default_factory=list)
+    row_count: int = 0
+    safety_controls: list[str] = Field(default_factory=list)
+
+
+class NarrativeContext(BaseModel):
+    excerpt: str
+    source: SourceLocator
 
 
 class ModelCallTrace(BaseModel):
@@ -197,6 +211,8 @@ class AnswerPayload(BaseModel):
     model_calls: list[ModelCallTrace] = Field(default_factory=list)
     mapping_trace: dict[str, object] = Field(default_factory=dict)
     retrieval_run: RetrievalRunTrace
+    analytical_trace: AnalyticalTrace = Field(default_factory=AnalyticalTrace)
+    narrative_context: list[NarrativeContext] = Field(default_factory=list)
 
 
 class HealthPayload(BaseModel):

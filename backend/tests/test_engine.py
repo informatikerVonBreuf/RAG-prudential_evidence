@@ -1,7 +1,7 @@
-from app.domain.models import AnswerStatus
+from app.domain.models import AnswerStatus, Mode
 from app.domain.profiles import explain_question_mapping, map_question
 from app.main import app
-from app.services.engine import choose_retrieval_strategy, stop_reason_for_status
+from app.services.engine import choose_retrieval_strategy, retrieval_budget, stop_reason_for_status
 from fastapi.testclient import TestClient
 
 client = TestClient(app)
@@ -14,6 +14,9 @@ def test_all_orchestration_routes_and_stop_reasons_are_explicit() -> None:
     assert stop_reason_for_status(AnswerStatus.CONFLICT) == "conflict"
     assert stop_reason_for_status(AnswerStatus.PARTIAL) == "budget_exhausted"
     assert stop_reason_for_status(AnswerStatus.NOT_FOUND) == "budget_exhausted"
+    assert retrieval_budget(Mode.QUICK) == (1, 3)
+    assert retrieval_budget(Mode.DEEP) == (1, 3, 5, 8)
+    assert retrieval_budget(Mode.SUMMARY) == (3, 5, 8)
 
 
 def test_mapping_explanation_exposes_selected_profile_and_trigger_score() -> None:
@@ -208,8 +211,7 @@ def test_real_qrt_coverage_contract_is_complete_and_cell_cited() -> None:
         "/api/query",
         json={
             "question": (
-                "What public evidence describes Groupe Foyer's prudential coverage "
-                "in 2025?"
+                "What public evidence describes Groupe Foyer's prudential coverage in 2025?"
             ),
             "scope": {"document_ids": ["foyer_group_qrt_2025"]},
             "constraints": {"entity": "Groupe Foyer", "period": "2025"},

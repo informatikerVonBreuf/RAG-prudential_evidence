@@ -26,7 +26,10 @@ def convert(path: Path, profile: DocumentProfile, output_directory: Path) -> Any
     options.generate_table_images = profile == DocumentProfile.QRT_TABLE_HEAVY
     options.images_scale = 2.0
     options.do_ocr = profile == DocumentProfile.SCANNED_DOCUMENT
-    options.do_table_structure = profile == DocumentProfile.QRT_TABLE_HEAVY
+    options.do_table_structure = profile in {
+        DocumentProfile.QRT_TABLE_HEAVY,
+        DocumentProfile.SCANNED_DOCUMENT,
+    }
     if options.do_table_structure:
         options.table_structure_options.mode = TableFormerMode.ACCURATE
         options.table_structure_options.do_cell_matching = True

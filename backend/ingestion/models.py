@@ -46,6 +46,9 @@ class TableCellArtifact(BaseModel):
     value_type: str
     unit: str
     provenance: Provenance
+    lifecycle: str = "EXTRACTED"
+    confidence: float | None = None
+    validation_checks: list[str] = Field(default_factory=list)
 
 
 class TableArtifact(BaseModel):

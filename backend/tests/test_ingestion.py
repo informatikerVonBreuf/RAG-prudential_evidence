@@ -5,10 +5,11 @@ import pytest
 from ingestion.chunking import chunk_figures
 from ingestion.enrich_visuals import enrich_cached_visuals
 from ingestion.indexing import build_embedding_cache
-from ingestion.models import FigureArtifact
+from ingestion.models import DocumentProfile, FigureArtifact
 from ingestion.pipeline import ingest_pdf
-from ingestion.promote import ROW_FIELDS, runtime_section_path
-from ingestion.pymupdf_fallback import QRT_TEMPLATES
+from ingestion.profiles import detect_document_profile
+from ingestion.promote import ROW_FIELDS, assess_cell_for_promotion, runtime_section_path
+from ingestion.pymupdf_fallback import QRT_TEMPLATES, extract_pages
 
 
 def test_visual_description_becomes_searchable_without_inferences(tmp_path: Path) -> None:
@@ -104,6 +105,37 @@ def test_runtime_promotion_gives_unsectioned_visuals_a_reviewable_locator() -> N
         "Page 1",
         "Unsectioned content",
     ]
-    assert runtime_section_path({"page_start": 7, "section_path": ["S.23.01.22"]}) == [
-        "S.23.01.22"
-    ]
+
+
+def test_table_cell_lifecycle_requires_all_deterministic_checks() -> None:
+    valid = {
+        "row_code": "R0690",
+        "column_code": "C0010",
+        "normalized_value": 2.87,
+        "value_type": "ratio",
+        "provenance": {"page": 7, "bbox": [1, 2, 3, 4]},
+    }
+    promoted = assess_cell_for_promotion(valid)
+    assert promoted["state"] == "PROMOTED"
+    assert promoted["failures"] == []
+
+    invalid = {**valid, "column_code": "C9999", "provenance": {"page": 7}}
+    candidate = assess_cell_for_promotion(invalid)
+    assert candidate["state"] == "CANDIDATE"
+    assert {"unexpected_column", "missing_provenance"} <= set(candidate["failures"])
+
+
+def test_image_only_pdf_is_routed_to_ocr_profile(tmp_path: Path) -> None:
+    import pymupdf
+
+    pdf_path = tmp_path / "image-only.pdf"
+    document = pymupdf.open()
+    document.new_page()
+    document.save(pdf_path)
+    document.close()
+
+    pages = extract_pages(pdf_path)
+    assert pages[0].potential_scan is True
+    profile = detect_document_profile(pdf_path, pages[0].text, potential_scan_ratio=1.0)
+    assert profile == DocumentProfile.SCANNED_DOCUMENT
+    assert runtime_section_path({"page_start": 7, "section_path": ["S.23.01.22"]}) == ["S.23.01.22"]
